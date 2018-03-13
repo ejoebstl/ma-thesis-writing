@@ -11,28 +11,12 @@
 %% Version 1.3.2, 2017-08-01
 
 
-\iflanguage{english}
-{\chapter{Appendix}}    % english style
-{\chapter{Anhang}}      % german style
-\label{chap:appendix}
-
-
-%% -------------------
-%% | Example content |
-%% -------------------
-\section{First Appendix Section}
-\label{sec:appendix:FirstSection}
-		
-\setcounter{figure}{0}
-		
-\begin{figure} [ht]
-  \centering
-  \caption{A figure}
-  \label{fig:anotherfigure}
-\end{figure}
-
-
-\dots
-%% ---------------------
-%% | / Example content |
-%% ---------------------
+\chapter{Appendix}
+\label{ch:appendix}
+The appendix will contain information that might be useful for readers but 
+does not fit anywhere else:
+\begin{itemize}
+  \item Practical pitfalls during training
+  \item Implementation details
+  \item If applicable, raw result data
+\end{itemize}

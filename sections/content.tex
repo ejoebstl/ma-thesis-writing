@@ -10,58 +10,59 @@
 %%
 %% Version 1.3.2, 2017-08-01
 
-\chapter{First Content Chapter}
-\label{ch:FirstContent}
+\chapter{ASR with HMM-based systems}
+\label{ch:HMM_ASR}
 
-%% -------------------
-%% | Example content |
-%% -------------------
-The content chapters of your thesis should of course be renamed. How many
-chapters you need to write depends on your thesis and cannot be said in general.
+This chapter will be focused on how ASR is done with Janus. It will contain: 
+\begin{itemize}
+    \item A brief introduction to HMM models
+    \item A brief introduction to HMM-based ASR tools:
+    \begin{itemize}
+        \item description of n-gram language models, dictionaries and context-dependent phone models
+        \item description of the purpose of an acoustic model
+        \item explanation, about how the this component are combined to form a speech recognizer 
+        \item example, showing how the language and phone models, as well as the dictionary are combined to form a HMM
+    \end{itemize}
+    \item A description of the Word-Error-Rate and Frame-Error-Rate metric. 
+    \item An explanation about training HMM-based systems using the expected maximisation algorithm. 
+\end{itemize}
 
-Check out the examples theses in the SDQWiki:
+\chapter{Time Delay Neural Networks}
+\label{ch:TDNN}
+The goal of this chaper is to provide a short introduction to neural networks, 
+as well as explain the concept of TDNNs. It will contain:
+\begin{itemize}
+    \item A brief intro to MLPs and SGD
+    \item Parameter coupling (convolutional neural networks)
+    \item Time delay neural networks
+    \item Interpretation of TDNNs as FIR filters
+\end{itemize}
 
-\url{https://sdqweb.ipd.kit.edu/wiki/Abschlussarbeit/Studienarbeit}
+\chapter{Acoustic Modelling using Neural Networks}
+\label{ch:acoustic_modelling}
+The goal of this chapter is to describe the approach of using DNNs for acoustic modelling.
+The contents will be: 
+\begin{itemize}
+    \item definition of the acoustic model training as a deep learning problem
+    \item different discriminative training strategies
+    \begin{itemize}
+        \item Binary Cross Entropy loss on existing labels
+        \item Bianry Cross Entropy with re-generating the labels, then trianing again
+        \item Minimum Bayes Risk and variants, especially State-Minimum-Bayes-Risk
+    \end{itemize}
+    \item A brief section about common tricks used when trianing DNN acoustic models, 
+          especially Exponential Decay/Newbob.
+    \item If there is time left: A brief analysis of the 2nd derivative of the loss function
+    during gradient descend.
+\end{itemize}
 
-Of course, you can split this .tex file into several files if you prefer. 
-
-
-\section{First Section}
-\label{sec:FirstContent:FirstSection}
-
-\dots
-
-\subsection{A Subsection}
-\label{sec:FirstContent:FirstSubSection}
-
-\dots
-
-\subsubsection{A Subsubsection}
-
-\section{Second Section}
-\label{sec:FirstContent:SecondSection}
-
-\dots
-
-
-\chapter{Second Content Chapter}
-\label{ch:SecondContent}
-
-\dots
-
-\section{First Section}
-\label{sec:SecondContent:FirstSection}
-
-\dots
-
-\section{Second Section}
-\label{sec:SecondContent:SecondSection}
-
-\dots
-
-Add additional content chapters if required by adding new .tex files in the
-\code{sections/} directory and adding an appropriate 
-\code{\textbackslash input} statement in \code{thesis.tex}. 
-%% ---------------------
-%% | / Example content |
-%% ---------------------
+\chapter{Experiment Setup}
+\label{ch:experiment_setup}
+This chapter should describe:
+\begin{itemize}
+    \item how the training was structured
+    \item which data, and which preprocessing was used
+    \item how was the data reverbed
+    \item which learning rate schedulers, optimizers, loss functions were used
+    \item which mechanisms were used to make the training faster and scalable
+\end{itemize}
