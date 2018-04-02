@@ -13,12 +13,165 @@
 \chapter{Introduction}
 \label{ch:Introduction}
 
-Contents of the introduction: 
-\begin{itemize}
-\item Why is ASR important? 
-\item Why is ASR with reverberated audio a problem worth solving?
-\item Why is ASR with reverberated audio hard? 
-\end{itemize}
+Automated Speech Recognition is an important way of human computer interaction. The fundamental problem Automated Speech Recognition attempts to solve is to transform natural spoken language to text, which can then easily be processed by computer systems. Especially with the advent of smart mobile devices, more and more use cases for Automated Speech Recognition are available, mainly in the form of smart assistants as described in \cite{lopez2017alexa}. There are also many use cases which are not facing end users, for example the automated transcription of university lectures, as outlined in \cite{muller2016lecture}.
+
+Despite the recent success of automated speech recognition, many systems still rely on microphones which are close to the speaker, or microphone arrays and beamforming. For many use cases, this is a serious draw back. Users might want to use their smart assistant without picking up their device every time. During lectures, it is hard to transcribe questions from the audience. 
+
+\cite{yoshioka2012making} gives a good overview about the problems that arise when distant microphones are used. The most prominent problem is reverberation. Reverberation happens, informally speaking, when a signal is overlayed with weaker, delayed copies of itself. 
+
+The goal of this work is to investiage how Automated Speech Recognition could be made more robust against reveberation. More specifically, a the focus is put on providing a more robust acoustic model using Time Delay Neural Networks. 
+
+\section{Reveberation and reverbed Audio}
+
+This section will focus on a formal definition of reverberation and provide some intuition why reveberation makes Automated Speech Recognition difficult. First, we give a very brief introduction to signal processing and system theory, according to the book \cite{leon2015signale}.
+
+\subsection{Continous Signals and Systems}
+
+An audio signal can, as any other continous \textit{signal}, be described as a continous function $y(t)$ where $t$ indicates the time. In literature, the argument $t$ is often dropped  when not explicitely needed to make equations easier to read.  
+Signals can be fed into \textit{systems}, which in turn creates an output signal. In the context of this work, we only consider linear, time invariant systems. 
+\\
+Let $S$ be a linear time invariant system, $y_1$, $y_2$ continous signals, and $c_1$, $c_2$ constants. The following properties hold if and only if a given system is an linear time invariant system: 
+
+\[S\{c_1 y_1(t) + c_2 y_2(t)\} = c_1 S\{y_1(t)\} + c_2 S\{y_2(t)\} \tag{linearity}\]
+
+The linear property allows us to treat application of a system to a signal as a linear transformation in the function space our signals are defined in. 
+
+\[y_1(t) = S\{y_2(t)\} \implies y_1(t - t0) = S\{y_2(t - t0)\} \tag{time invariance}\]
+
+The time invariance propery guarantees that the behavior of a system never depends on the time. In other words, if the input signal to a system is shifted in time, the only difference to the output is a shift in time as well.
+
+\[
+\begin{rcases*}
+y_1(t') = y_2(t') \\
+x_1(t') = S\{y_1(t')\} \\ 
+x_2(t') = S\{y_2(t')\} \\
+\end{rcases*} \implies x_1(t') = x_2(t') \tag{causality}\]
+
+The causality property guarantees that, if two signals are equal for all times $t'$ before a chosen time $t_0$, the output signals of the system processing this signals will also be equal up to this point. Simply put, the output of a system up to time $t_0$ can not depend on any input that happens after $t_0$. It is worth to note that all real systems are always causal. 
+\\ \\
+A linear time-invariant system can be characterized by its so called impulse response $g$, defined as the system output when presented with a so called dirac impulse $\delta$.
+
+\[g(t) = S\{\delta(t)\}\]
+
+The dirac impulse $\delta$ is a function that is formally defined by the following equation. 
+
+\begin{align}
+g(t_2) = \int_{-\infty}^{\infty} y(t)\delta(t - t_2) dt \label{eq:dirac} 
+\end{align}
+
+It can be said that the dirac impulse is zero for all $t$ not equal to zero. The integral over the dirac impulse defined to be one. 
+\\ \\
+Given definition \ref{eq:dirac}, as well as the linear property, we can show that the impulse response of a system is indeed sufficient to calculate the output signal for any given input signal. 
+\begin{align*}
+x(t) &= S\{y(t)\} \\
+	 &= S\left\{\int_{-\infty}^{\infty} y(\tau)\delta(\tau - t) d\tau \right\} \\
+	 &= \int_{-\infty}^{\infty} y(\tau)S\{\delta(\tau - t)\} d\tau \\
+	 &= \int_{-\infty}^{\infty} y(\tau)g(\tau - t) d\tau
+\end{align*}
+
+Furthermore, we define the convolution operation, $*$, for two given signals as follows.
+
+\[
+ (y_1 * y_2)(t) = \int_{-\infty}^{\infty} y(\tau)y_2(\tau - t) d\tau \tag{(convolution)}
+\]
+
+A convolution is thus an operation that combines two functions to create a new function. Given this definition, we can write the output signal $x$ of a system $S$ given an input signal $y$ as convolution with the impulse response $g$ of the system. 
+
+\[
+x(t) = S\{y(t)\} = (y * g)(t)
+\]
+
+\subsection{Properties of Reverberation}
+
+The acoustic properties of a room can be approximated as a linear time invariant system. The properties of this system are dependent on the properties of the room itself, for example the shape, size and surface of the wall, as well as the location of the sound source and the location of the receiver. Especially regarding automated speech recognition, \cite{ritter2016training} gives results that show that the location of a speaker relative to the microphone can have a very large impact on recognition results.
+
+The measured impulse response of a real reveberation can be seen in figure \ref{fig:air_rir}. This specific sample is taken from the Aachen Impulse Response database \cite{jeub2009binaural}. Such a sample can be created by creating a very brief sound impulse, for example a clap, in an otherwise silent room, and then recording the sound for a few seconds. 
+
+As described in \cite{yoshioka2012making}, we can divide the impulse response into the direct sound itself, early reflections, and late reverberation. The intuition behind is that the original sound wave arrives at the receiver first. After that, reflections of the signal which were reflected once by the walls of the room arrive. These reflections are already dampened significantly. Then, reflections of reflections will be received, and so on, until the sound waves become so weak that the room is silent again. 
+\\ \\
+\begin{minipage}{\linewidth}
+	\makebox[\linewidth]{
+		\begin{tikzpicture}
+			\begin{axis}[ytick=\empty,height=6cm, ylabel=Amplitude, xlabel=Milliseconds, 
+			xticklabel style={name=T\ticknum}]
+			\addplot table [x expr=\coordindex / 4,y=amplitude,color=black,mark=none] {data/air0053bilecture};
+			
+			\end{axis}	
+			\draw[] (1.2,4) -- (1,4) node[anchor=east,font=\tiny] {Sound};
+			\draw[decorate, decoration={brace}] (1.3,3.2) -- (3.00,3.2) node[midway, anchor=south,font=\tiny] {Early Reflections};	
+			\draw[decorate, decoration={brace}] (3.05,3.2) -- (11.8,3.2) node[midway, anchor=south,font=\tiny] {Late Reverberations};	
+			\label{fig:air_rir}
+		\end{tikzpicture}
+	}
+	\captionof{figure}{Room impulse response of a lecture hall}
+\end{minipage}
+
+It is important to note that late reveberations can be measureable for several hundred milliseconds.\\\\
+
+To illustrate the impact of reflection and reveberation in a more formal way, we can use the decomposition into direct sound, early reflection, and late reverberation. We define a rather crude approximation of a room impulse response that subsequently overlays an audio signal with weaker copies of itself.
+
+\[
+g_{rir}(t) = w_0 \delta(t) + \sum_{1}^{n} w_n * delta(t - t_n)
+\]
+
+Here, $w_n$ are weighting factors, which represent the dampening of our reflections. $t_n$ are the delays until our reflection is received. We now consider the system $S_{rir}$ associated with the impulse response $g_{rir}$, apply the audio signal $y$ and observe the output $x$.
+
+\begin{align*}
+x(t) &= S_{rir}\{y(t)\} \\
+     &= (g_{rir} * y)(t) \\
+     &= \int_{-\infty}^{\infty} g(\tau)y(\tau - t) d\tau \\
+     &= \int_{-\infty}^{\infty} \left[ w_0 \delta(t) + \sum_{n} w_n * \delta(t - t_n)\right] y(\tau - t) d\tau \\
+     &= \int_{-\infty}^{\infty} \delta(t) y(\tau - t) d\tau + \sum_{n}  \int_{-\infty}^{\infty} w_n \delta(t - t_n) y(\tau - t) d\tau  \\
+     &= w_0 y(t) + \sum_{n} w_n y(t - t_n)
+\end{align*}
+
+If the room impulse response is non-zero over at a certain time interval $t_n$, the audio signal produced at $t$ will still influence the received signal $x$ at $t + t_n$. 
+
+\subsection{Impact of Reverberation on Digital Audio Samples}
+
+Before formally introducing automated speech recognition during a later chapter, we want to show that the impact of reverberation can be significant for many applications that process sound or speech.\\ \\
+Before a signal can be processed on a computer, it has to be measured. This process is called \textit{sampling}. Formally, we can describe sampling as the following operation, where $t_A$ is called the sampling interval. We call $y_{digital}$ a discrete signal. 
+
+\[
+y_{digital}(t) = y(t) * \sum_{n = 0}^{\infty} \delta{t - nt_A} 
+\]
+
+Since this yields a time series of inifinite length, signals are usually cut into pieces, which are then independently processed from each other. This is called windowing. For the most simple form of windowing, we can set all signal values outside of a certain range to be zero. Formally, this can be defined by multiplying the signal with a rectangle function $\sigma_{rect,a}(t)$ .
+
+\[
+\sigma_{rect,a}(t) = \begin{cases}
+1 &,-a < t < a \\
+0
+\end{cases}
+\]
+
+When working with signals, especially for classification tasks, methods built upon the \textit{fourier transform} are used very often. The fourier transform transforms a signal $y(t)$ from its time domain to the frequency domain $Y(f)$. The resulting function $Y(f)$ is called the spectrum and gives the distribution of energy over all frequencies for the original signal $y(t)$. The fourier transformation can be defined for continous or descrete signals, as well as for descrete and windowed signals. In the case of descrete and windowed signal, this is called the \textit{short time fourier transform}, which was first described in \cite{gabor1946theory}. It can formally be defined as follows, with an arbritary window function $\sigma$:
+
+\[
+Y(n, \omega) = \sum_{m = -\infty}^{\infty} y(mt_A) \sigma((n - m)t_A) e^{-j \omega n}  
+\]
+
+The function $Y(n, \omega)$ gives the energy for a certain time window $n$ and a frequency window $\omega$. The time resolution depends reciprocally on the frequency resolution and vice versa. It is not possible to increase the frequency resolution while not decreasing the time resolution.\\ \\
+
+We can investigate the effects of a reverbed signal on the short time fourier transform by applying the same approach as in the previous chapter. The resulting short time fourier spectrum of the reverbed and sampled signal is given as follows.
+
+\begin{align*}
+Y(n, \omega) = \sum_{m = -\infty}^{\infty} w_0 y(mt_A) \sigma((n - m)t_A) e^{-j \omega n} + 
+\sum_{m = -\infty}^{\infty} \sum_{n} w_n y(mt_A - t_n) \sigma((n - m)t_A) e^{-j \omega n}  
+\label{eq:stftnoise}
+\end{align*}
+
+Equation \ref{eq:stftnoise} shows that, for large $t_n$ and $w_n$, significant noise is added to neighboring time windows. To recapitulate from the last chapter, the $t_n$ for a large room can be up to several tenths of seconds, while the window size for most applications is in the hundrets of milliseconds. 
+\\ \\
+This mathematic observation shall serve as a motivation for this work. Reverberation, especially late reverberation can be a hard problem that significantly distorts measurements of signals. We conclude the introduction with 
+
+TODO: Nice picture of noisy STFT
+
+
+
+
+
+
 
 \section{Related Work}
 \label{ch:related_work}
