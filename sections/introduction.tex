@@ -165,6 +165,24 @@ Equation \ref{eq:stftnoise} shows that, for large $t_n$ and $w_n$, significant n
 \\ \\
 This mathematic observation shall serve as a motivation for this work. Reverberation, especially late reverberation can be a hard problem that significantly distorts measurements of signals. We conclude the introduction with 
 
+\begin{minipage}{\linewidth}
+	\makebox[\linewidth]{
+		\begin{tikzpicture}
+		\begin{axis}[xlabel=Time, ylabel=Frequency, ytick=\empty, width= .50\textwidth]
+		\addplot [] 
+		graphics[xmin=0,xmax=3,ymin=0,ymax=1] {images/abc_spectrogram.png};
+		\end{axis}
+		\end{tikzpicture}
+		\begin{tikzpicture}
+		\begin{axis}[xlabel=Time, ylabel=\empty, ytick=\empty, width= .50\textwidth]
+		\addplot [] 
+		graphics[xmin=0,xmax=3,ymin=0,ymax=1] {images/abc_noise_spectrogram.png};
+		\end{axis}
+		\end{tikzpicture}
+	}
+	\captionof{figure}{Room impulse response of a lecture hall}
+\end{minipage}
+
 TODO: Nice picture of noisy STFT
 
 
