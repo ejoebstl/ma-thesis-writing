@@ -1,0 +1,157 @@
+
+\chapter{Related Work}
+
+This chapter will give a brief introduction to neural networks and time delay neural networks, as well as an introduction automated speech recognition with hidden Markov models. These are the necessary building blocks for the work presented in this thesis. At the end of this chapter, we will also briefly present research that directly inspired this work. 
+
+\section{Neural Networks}
+
+In machine learning research, the goal of a \textit{neural network} is to approximate arbitrary functions. The basic idea of neural networks, so called \textit{perceptrons}, were first introduced by Rosenblatt in \cite{rosenblatt1958perceptron}. While the first neural networks were biologically motivated, neural networks can be interpreted as composition of functions. The relation between these functions forms a directed graph. In this work, we will only cover \textit{feed forward neural networks}. They are called feed forward neural networks because there are no feedback connections: The relation between all functions in the neural network forms an acyclic directed graph. Feed forward networks are an important building block for many machine learning applications. 
+\\
+More formally, as described in \cite{Goodfellow-et-al-2016}, a feed forward neural network can be described as a model $y = f^*(x, \theta)$, approximating an existing function $y = f(x)$. In this example $x$ is the input, $y$ is the output and $\theta$ are the model parameters which are learned during training. $f$ is the function to approximate and $f^*$ is a composition of many functions with the parameters $\theta$. 
+\\
+In practice, the functions composing a feed forward neural network are often simply chained, so that their relation graph simply forms a path. In this case, the functional components are called layers. A feed forward neural network of this form with $n$ layers can be written as follows:
+
+\[y = f^*_n \dots (f^*_2(f^*_1(x, \theta_1), \theta_2) \dots, \theta_n)\]
+
+For this type of neural network, $f^*_1$ is applied to the input, then $f^*_2$ is applied to the output of $f^*_1$, until the final layer is reached. The output of the final layer is the output of the neural network.
+
+\begin{minipage}{\linewidth}
+	\makebox[\linewidth]{
+	\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
+	
+	
+	%% TODO: How do we draw the arrows here? 
+	\foreach \m/\l [count=\y] in {x,1,2,missing,n,y}
+	\node [every neuron/.try, neuron \m/.try] (n\m) at (\y*1-1,2.5-0) {};
+	%%\draw [->] (n\m) -- (n\lastm);
+	
+	\foreach \m/\l [count=\y] in {x,1,2,missing,n,y}
+	
+	\foreach \m/\l [count=\y] in {1,2,3,missing,4}
+	\node [every neuron/.try, neuron \m/.try] (input-\m) at (0,2.5-\y) {};
+	
+	\foreach \m [count=\y] in {1,missing,2}
+	\node [every neuron/.try, neuron \m/.try ] (hidden-\m) at (2,2-\y*1.25) {};
+	
+	\foreach \m [count=\y] in {1,missing,2}
+	\node [every neuron/.try, neuron \m/.try ] (output-\m) at (4,1.5-\y) {};
+	
+	\foreach \l [count=\i] in {1,2,3,n}
+	\draw [<-] (input-\i) -- ++(-1,0)
+	node [above, midway] {$I_\l$};
+	
+	\foreach \l [count=\i] in {1,n}
+	\node [above] at (hidden-\i.north) {$H_\l$};
+	
+	\foreach \l [count=\i] in {1,n}
+	\draw [->] (output-\i) -- ++(1,0)
+	node [above, midway] {$O_\l$};
+	
+	\foreach \i in {1,...,4}
+	\foreach \j in {1,...,2}
+	\draw [->] (input-\i) -- (hidden-\j);
+	
+	\foreach \i in {1,...,2}
+	\foreach \j in {1,...,2}
+	\draw [->] (hidden-\i) -- (output-\j);
+	
+	\foreach \l [count=\x from 0] in {Input, Hidden, Ouput}
+	\node [align=center, above] at (\x*2,2) {\l \\ layer};
+	
+	\end{tikzpicture}
+	}
+\end{minipage}
+
+
+Even with this simplification, it has been shown that such a feed forward neural network can approximate any function with any desired accuracy. This is called the \textit{universal approximation theorem}, the proof can be found in \cite{hornik1989multilayer}. The caveat is finding the correct function $f^*_n$ to use in each layer and the correct parameters $\theta_n$. Also, finding the function to approximate is non-trivial in the first place. We will discuss these problems in the next sections. 
+
+\subsection{}
+
+
+
+\label{ch:realted_work}
+\subsection{ASR with HMM-based systems}
+\label{ch:HMM_ASR}
+
+This chapter will be focused on how ASR is done with Janus. It will contain: 
+\begin{itemize}
+	\item A brief introduction to HMM models
+	\item A brief introduction to HMM-based ASR tools:
+	\begin{itemize}
+		\item description of n-gram language models, dictionaries and context-dependent phone models
+		\item description of the purpose of an acoustic model
+		\item explanation, about how the this component are combined to form a speech recognizer 
+		\item example, showing how the language and phone models, as well as the dictionary are combined to form a HMM
+	\end{itemize}
+	\item A description of the Word-Error-Rate and Frame-Error-Rate metric. 
+	\item An explanation about training HMM-based systems using the expected maximisation algorithm. 
+\end{itemize}
+
+\subsection{Time Delay Neural Networks}
+\label{ch:TDNN}
+The goal of this chaper is to provide a short introduction to neural networks, 
+as well as explain the concept of TDNNs. It will contain:
+\begin{itemize}
+	\item A brief intro to MLPs and SGD
+	\item Parameter coupling (convolutional neural networks)
+	\item Time delay neural networks
+	\item Interpretation of TDNNs as FIR filters
+\end{itemize}
+
+\subsection{Acoustic Modelling using Neural Networks}
+\label{ch:acoustic_modelling}
+The goal of this chapter is to describe the approach of using DNNs for acoustic modelling.
+The contents will be: 
+\begin{itemize}
+	\item definition of the acoustic model training as a deep learning problem
+	\item different discriminative training strategies
+	\begin{itemize}
+		\item Binary Cross Entropy loss on existing labels
+		\item Bianry Cross Entropy with re-generating the labels, then trianing again
+		\item Minimum Bayes Risk and variants, especially State-Minimum-Bayes-Risk
+	\end{itemize}
+	\item A brief section about common tricks used when trianing DNN acoustic models, 
+	especially Exponential Decay/Newbob.
+	\item If there is time left: A brief analysis of the 2nd derivative of the loss function
+	during gradient descend.
+\end{itemize}
+
+\begin{minipage}{\linewidth}
+	\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
+	
+	\foreach \m/\l [count=\y] in {1,2,3,missing,4}
+	\node [every neuron/.try, neuron \m/.try] (input-\m) at (0,2.5-\y) {};
+	
+	\foreach \m [count=\y] in {1,missing,2}
+	\node [every neuron/.try, neuron \m/.try ] (hidden-\m) at (2,2-\y*1.25) {};
+	
+	\foreach \m [count=\y] in {1,missing,2}
+	\node [every neuron/.try, neuron \m/.try ] (output-\m) at (4,1.5-\y) {};
+	
+	\foreach \l [count=\i] in {1,2,3,n}
+	\draw [<-] (input-\i) -- ++(-1,0)
+	node [above, midway] {$I_\l$};
+	
+	\foreach \l [count=\i] in {1,n}
+	\node [above] at (hidden-\i.north) {$H_\l$};
+	
+	\foreach \l [count=\i] in {1,n}
+	\draw [->] (output-\i) -- ++(1,0)
+	node [above, midway] {$O_\l$};
+	
+	\foreach \i in {1,...,4}
+	\foreach \j in {1,...,2}
+	\draw [->] (input-\i) -- (hidden-\j);
+	
+	\foreach \i in {1,...,2}
+	\foreach \j in {1,...,2}
+	\draw [->] (hidden-\i) -- (output-\j);
+	
+	\foreach \l [count=\x from 0] in {Input, Hidden, Ouput}
+	\node [align=center, above] at (\x*2,2) {\l \\ layer};
+	
+	\end{tikzpicture}
+\end{minipage}
+
+
+\subsection{Acoustic Modelling using TDNNs.} 

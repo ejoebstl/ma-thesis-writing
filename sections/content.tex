@@ -10,51 +10,7 @@
 %%
 %% Version 1.3.2, 2017-08-01
 
-\chapter{ASR with HMM-based systems}
-\label{ch:HMM_ASR}
 
-This chapter will be focused on how ASR is done with Janus. It will contain: 
-\begin{itemize}
-    \item A brief introduction to HMM models
-    \item A brief introduction to HMM-based ASR tools:
-    \begin{itemize}
-        \item description of n-gram language models, dictionaries and context-dependent phone models
-        \item description of the purpose of an acoustic model
-        \item explanation, about how the this component are combined to form a speech recognizer 
-        \item example, showing how the language and phone models, as well as the dictionary are combined to form a HMM
-    \end{itemize}
-    \item A description of the Word-Error-Rate and Frame-Error-Rate metric. 
-    \item An explanation about training HMM-based systems using the expected maximisation algorithm. 
-\end{itemize}
-
-\chapter{Time Delay Neural Networks}
-\label{ch:TDNN}
-The goal of this chaper is to provide a short introduction to neural networks, 
-as well as explain the concept of TDNNs. It will contain:
-\begin{itemize}
-    \item A brief intro to MLPs and SGD
-    \item Parameter coupling (convolutional neural networks)
-    \item Time delay neural networks
-    \item Interpretation of TDNNs as FIR filters
-\end{itemize}
-
-\chapter{Acoustic Modelling using Neural Networks}
-\label{ch:acoustic_modelling}
-The goal of this chapter is to describe the approach of using DNNs for acoustic modelling.
-The contents will be: 
-\begin{itemize}
-    \item definition of the acoustic model training as a deep learning problem
-    \item different discriminative training strategies
-    \begin{itemize}
-        \item Binary Cross Entropy loss on existing labels
-        \item Bianry Cross Entropy with re-generating the labels, then trianing again
-        \item Minimum Bayes Risk and variants, especially State-Minimum-Bayes-Risk
-    \end{itemize}
-    \item A brief section about common tricks used when trianing DNN acoustic models, 
-          especially Exponential Decay/Newbob.
-    \item If there is time left: A brief analysis of the 2nd derivative of the loss function
-    during gradient descend.
-\end{itemize}
 
 \chapter{Approach}
 \label{ch:approach}
