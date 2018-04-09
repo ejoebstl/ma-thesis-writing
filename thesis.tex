@@ -93,11 +93,17 @@
 		draw,
 		minimum size=1cm
 	},
-	neuron missing/.style={
+	neuron vmissing/.style={
 		draw=none, 
 		scale=4,
 		text height=0.333cm,
 		execute at begin node=\color{black}$\vdots$
+	},
+	neuron hmissing/.style={
+		draw=none, 
+		scale=2,
+		text height=0.333cm,
+		execute at begin node=\color{black}$\hdots$
 	},
 }
 

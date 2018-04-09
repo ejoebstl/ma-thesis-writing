@@ -11,63 +11,103 @@ More formally, as described in \cite{Goodfellow-et-al-2016}, a feed forward neur
 \\
 In practice, the functions composing a feed forward neural network are often simply chained, so that their relation graph simply forms a path. In this case, the functional components are called layers. A feed forward neural network of this form with $n$ layers can be written as follows:
 
-\[y = f^*_n \dots (f^*_2(f^*_1(x, \theta_1), \theta_2) \dots, \theta_n)\]
+\[
+y = f^*_n \dots (f^*_2(f^*_1(x, \theta_1), \theta_2) \dots, \theta_n)
+\]
 
-For this type of neural network, $f^*_1$ is applied to the input, then $f^*_2$ is applied to the output of $f^*_1$, until the final layer is reached. The output of the final layer is the output of the neural network.
+For this type of neural network, $f^*_1$ is applied to the input, then $f^*_2$ is applied to the output of $f^*_1$, until the final layer is reached. The output of the final layer is the output of the neural network. Figure \ref{fig:simple_feed_forward_nn} shows a graph based representation of such a neural network. Each node represents a function, arrows represent data flows. 
 
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
 	\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
 	
+	\node [every neuron] (n0) at (0*1-1,2.5-0) {$x$}; 
+	\node [every neuron] (n1) at (1*1-1,2.5-0) {$f^*_1$}; 
+	\node [every neuron] (n2) at (2*1-1,2.5-0) {$f^*_2$}; 
+	\node [neuron hmissing] (n3) at (3*1-1,2.5-0) {}; 
+	\node [every neuron] (n4) at (4*1-1,2.5-0) {$f^*_n$}; 
+	\node [every neuron] (n5) at (5*1-1,2.5-0) {$y$}; 
 	
-	%% TODO: How do we draw the arrows here? 
-	\foreach \m/\l [count=\y] in {x,1,2,missing,n,y}
-	\node [every neuron/.try, neuron \m/.try] (n\m) at (\y*1-1,2.5-0) {};
-	%%\draw [->] (n\m) -- (n\lastm);
-	
-	\foreach \m/\l [count=\y] in {x,1,2,missing,n,y}
-	
-	\foreach \m/\l [count=\y] in {1,2,3,missing,4}
-	\node [every neuron/.try, neuron \m/.try] (input-\m) at (0,2.5-\y) {};
-	
-	\foreach \m [count=\y] in {1,missing,2}
-	\node [every neuron/.try, neuron \m/.try ] (hidden-\m) at (2,2-\y*1.25) {};
-	
-	\foreach \m [count=\y] in {1,missing,2}
-	\node [every neuron/.try, neuron \m/.try ] (output-\m) at (4,1.5-\y) {};
-	
-	\foreach \l [count=\i] in {1,2,3,n}
-	\draw [<-] (input-\i) -- ++(-1,0)
-	node [above, midway] {$I_\l$};
-	
-	\foreach \l [count=\i] in {1,n}
-	\node [above] at (hidden-\i.north) {$H_\l$};
-	
-	\foreach \l [count=\i] in {1,n}
-	\draw [->] (output-\i) -- ++(1,0)
-	node [above, midway] {$O_\l$};
-	
-	\foreach \i in {1,...,4}
-	\foreach \j in {1,...,2}
-	\draw [->] (input-\i) -- (hidden-\j);
-	
-	\foreach \i in {1,...,2}
-	\foreach \j in {1,...,2}
-	\draw [->] (hidden-\i) -- (output-\j);
-	
-	\foreach \l [count=\x from 0] in {Input, Hidden, Ouput}
-	\node [align=center, above] at (\x*2,2) {\l \\ layer};
+	\draw [->] (n0) -- (n1);
+	\draw [->] (n1) -- (n2);
+	\draw [->] (n2) -- (n3);
+	\draw [->] (n3) -- (n4);
+	\draw [->] (n4) -- (n5);
 	
 	\end{tikzpicture}
 	}
+	\captionof{figure}{Simple graphical interpretation of feed forward neural network}
+	\label{fig:simple_feed_forward_nn}
+	\hspace{1cm}
 \end{minipage}
 
 
 Even with this simplification, it has been shown that such a feed forward neural network can approximate any function with any desired accuracy. This is called the \textit{universal approximation theorem}, the proof can be found in \cite{hornik1989multilayer}. The caveat is finding the correct function $f^*_n$ to use in each layer and the correct parameters $\theta_n$. Also, finding the function to approximate is non-trivial in the first place. We will discuss these problems in the next sections. 
 
-\subsection{}
+\subsection{Designing Neural Networks}
 
+In practice, neural network layers are often formed by combining an affine transformation with a non-linear function. Since affine transformations of data vectors can be interpreted as matrix-vector multiplications, we can write a layer function in the following way, where $x_k$ is the input vector for $k$th layer, $W_k$ is the matrix defining the affine transformation of the $k$th layer, and $\varphi$ is a non-linear activation function of layer k.
+\[
+f^*_k(x_k) = \varphi_k(W_k x_k)  
+\]
+The count of layers, as well as the size of each $W_k$ are design decisions and depend on the task. We call the count of layers \textit{depth} of a neural network, and count of rows in $W_k$ the \textit{width} of layer $k$. 
 
+\subsubsection{Activation Functions}
+
+Non-linear activation functions, or simply \textit{activation functions}, can be roughly classified into two groups: Activation functions which are applied element-wise and thus do not change the dimension of the data, as well as activation functions which are applied on groups of elements of the input vector and change the dimension. The latter case is commonly fund with so called pooling functions. The choice of the activation function $\varphi$ has significant impact on the performance of a neural network and has been subject to many bodies of research, as summarized in \cite{thoma2017analysis}. In this work, we will only discuss the \textit{ReLU}, \textit{p-norm} and \textit{softmax} activation functions. 
+
+\subsubsection*{Rectified Linear Unit (ReLU)}
+% ReLU
+\begin{minipage}{0.45\textwidth}
+	\[\phi^{ReLU}(x) = \begin{cases}
+	0 & x < 0 \\
+	x & x \geq 0
+	\end{cases}\]
+	First introduced in \cite{krizhevsky2012imagenet}, ReLU nonlinearities have proven successful in practice. The computation of ReLU nonlinearity is cheap, also the gradient never saturates for positive values of $x$. For negative values, the gradient is zero, which can be a disadvantage.  
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+\begin{tikzpicture}[baseline=(current bounding box)]
+\begin{axis}[xmin=-2,xmax=2,ymin=-2,ymax=2,axis lines = middle,xlabel = $x$,ylabel = $\phi^{ReLu}(x)$,clip = false]
+\addplot+[mark=none,blue,domain=-2:0] {0};
+\addplot+[mark=none,blue,domain=0:2] {x};
+\end{axis}
+\end{tikzpicture} 
+\captionof{figure}{The ReLU function.}
+\end{minipage}
+% L2 Pooling
+
+\subsubsection*{P-norm}
+\begin{minipage}{0.45\textwidth}
+	\[\phi^{Lp}(X) = \sqrt[p]{ \sum_{x \in X}{x^p} } \] 
+	The p-norm nonlinearity was described by \cite{zhang2014improving}. This nonlinearity operates on a set $X$ of input elements and reduces them to one. The group size as well as the $p$ are a design parameter. For a fixed $p$ of $2$, the p-norm is also called \text{L2 pooling}.
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+\begin{tikzpicture}[baseline=(current bounding box)]
+\begin{axis}[xmin=-2,xmax=2,ymin=-2,ymax=2,xlabel = $x_1$,ylabel = $x_2$,zlabel = $\phi^{L2}({x_1, x_2})$,colormap/violet,clip = false]
+\addplot3[surf,samples=25, domain=-2:2]
+{sqrt(x * x + y * y)};
+\end{axis}
+\end{tikzpicture}
+\captionof{figure}{Example of p-norm with $p = 2$ and and an input group containing two values}
+\end{minipage}
+
+\subsubsection*{Softmax}
+\begin{minipage}{0.45\textwidth}
+	\[\phi^{softmax}(X)_i = \frac{e^x_i}{ \sum_{x_j \in X} e^x_j } \]
+	The softmax activation is defined as an operation over the whole input, but does not reduce the dimension. It maps all output values to a space between $0$ and $1$, preserves the rank of each output and also guarantees that the sum over all outputs is exactly $1$. Therefore it produces a valid probability distribution and is usually used for the last layer of a neural network for classification problems.
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+	\begin{tikzpicture}[baseline=(current bounding box)]
+	\begin{axis}[xmin=-2,xmax=2,ymin=-2,ymax=2,xlabel = $x_1$,ylabel = $x_2$,zlabel = $\phi^{softmax}({x_1, x_2})_2$,colormap/violet,clip = false]
+	\addplot3[surf,samples=25, domain=-2:2]
+	{sqrt(e^y / (e^x + e^y) )};
+	\end{axis}
+	\end{tikzpicture}
+	\captionof{figure}{Example of softmax for an input vector containing two values}
+\end{minipage}
 
 \label{ch:realted_work}
 \subsection{ASR with HMM-based systems}
