@@ -44,13 +44,49 @@ For this type of neural network, $f^*_1$ is applied to the input, then $f^*_2$ i
 
 Even with this simplification, it has been shown that such a feed forward neural network can approximate any function with any desired accuracy. This is called the \textit{universal approximation theorem}, the proof can be found in \cite{hornik1989multilayer}. The caveat is finding the correct function $f^*_n$ to use in each layer and the correct parameters $\theta_n$. Also, finding the function to approximate is non-trivial in the first place. We will discuss these problems in the next sections. 
 
+\subsection{Training Neural Networks}
+
+Given the definition in the past section, we can treat the problem of training a given neural network as finding appropriate parameters $\theta$ to minimize a certain \textit{error function} or \textit{loss function} $E = \mathcal{L}(y)$, where $E$ denotes the error and $y$ the network output. The state of the art algorithm for optimizing the parameters of a neural network is called \textit{stochastic gradient descend}, a special application of regular \textit{gradient descend}. 
+\subsubsection{Naive Gradient Descent}
+To apply gradient descend, we have to calculate the derivative of the loss function, given a certain input, with respect to a certain parameter $\theta_i$. Since this derivative is multi-dimensional, it is called the \textit{gradient}. Given a feed forward neural network, we can write the error as follows:
+
+\[
+E = \mathcal{L}(f^*_n \dots (f^*_2(f^*_1(x, \theta_1), \theta_2) \dots, \theta_n))
+\]
+
+Thus, the derivative of the error with respect to a certain weight can be calculated by applying the chain rule.  
+
+\[
+\frac{\delta E}{\delta \theta_i} = 
+	\frac{\delta \mathcal{L}}{\delta y_n}
+	\frac{\delta f^*_n}{\delta y_{n - 1}}
+	\dots
+	\frac{\delta f^*_{i + 2}}{\delta y_i}
+	\frac{\delta f^*_i}{\delta \theta_i}
+\]
+
+Where $y_k$ is the result of $f^*_k$. \\
+We know that the gradient $\frac{\delta E}{\delta \theta_i}$ will become zero in a local minimum, local maximum or saddle point of our error $E$. Since the gradient also gives the direction of the steepest slope, we can simply update our parameters iteratively, until we converge into a local minimum. 
+
+\[
+	\theta_i = \theta_i - \epsilon * \frac{\delta E}{\delta \theta_i}
+\]
+
+The parameter $\epsilon$ is the so-called learning rate. It has to be chosen by the designer of the neural network and influences not only the speed of convergence, but also whether the network converges at all. 
+
+TODO: Mention this is called backpropagation. 
+
+\subsubsection{Stochastic Gradient Descend}
+
+TODO: Nestorov and Suskever SDG, why does SGD even work, batch size, what do we actually optimize. 
+
 \subsection{Designing Neural Networks}
 
 In practice, neural network layers are often formed by combining an affine transformation with a non-linear function. Since affine transformations of data vectors can be interpreted as matrix-vector multiplications, we can write a layer function in the following way, where $x_k$ is the input vector for $k$th layer, $W_k$ is the matrix defining the affine transformation of the $k$th layer, and $\varphi$ is a non-linear activation function of layer k.
 \[
 f^*_k(x_k) = \varphi_k(W_k x_k)  
 \]
-The count of layers, as well as the size of each $W_k$ are design decisions and depend on the task. We call the count of layers \textit{depth} of a neural network, and count of rows in $W_k$ the \textit{width} of layer $k$. 
+The count of layers, as well as the size of each $W_k$ are design decisions and depend on the task. We call the count of layers \textit{depth} of a neural network, and count of rows in $W_k$ the \textit{width} of layer $k$. The contents of $W_k$, called the \textit{weights} of layer $k$, are the trainable parameters $\theta$ for models of this form.
 
 \subsubsection{Activation Functions}
 
