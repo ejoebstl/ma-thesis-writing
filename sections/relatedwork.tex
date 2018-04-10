@@ -72,15 +72,23 @@ We know that the gradient $\frac{\delta E}{\delta \theta_i}$ will become zero in
 	\theta_i = \theta_i - \epsilon * \frac{\delta E}{\delta \theta_i}
 \]
 
-The parameter $\epsilon$ is the so-called learning rate. It has to be chosen by the designer of the neural network and influences not only the speed of convergence, but also whether the network converges at all. 
-
-TODO: Mention this is called backpropagation. 
+The parameter $\epsilon$ is the so-called learning rate. It has to be chosen by the designer of the neural network and influences not only the speed of convergence, but also whether the network converges at all. In literature, propagating the error gradient through a neural network is called \textit{backpropagation}. Backpropagation in the context of neural networks was first described in \cite{werbos1974beyond}.
 
 \subsubsection{Stochastic Gradient Descend}
 
-TODO: Nestorov and Suskever SDG, why does SGD even work, batch size, what do we actually optimize. 
+In practice, naive gradient descend does not work well, as described in \cite{wilson2003general}. The reason is that the function we seek to optimize when training a neural network is not convex and might have many local minima. Optimizing iteratively on a stationary error term makes this approach prone to falling into local minima. Furthermore, as with most machine learning approaches, we define our error function by using some form of \textit{training dataset}. We usually do not want the neural network to excel on the training data set, but rather to perform well on unseen data. This ability is called \textit{generalization}. We can approximate the error on unseen data by testing the neural network on a \textit{test dataset}. The test dataset must never be used for adjusting the parameters, as this will make the test dataset worthless. \\ \\
+The state of the art algorithm for training neural networks is called \textit{stochastic gradient descent} (\textit{SGD}), which was first described in a context of neural networks in \cite{bottou1991stochastic}. Stochastic gradient descent introduces two fundamental changes and is. First, we no longer calculate our error term and corresponding gradient for the whole dataset, but for a randomly sampled subset of our data set, which is called a \textit{mini batch}. Second, we decrease our learning rate while training progresses. According to \cite{Goodfellow-et-al-2016}, iterating on mini batches adds noise to our error term, which in turn offers a regularization effect which was shown to lead to better generalization. A disadvantage of stochastic gradient descend is the slower convergence. In practice, we usually shuffle our dataset, split it into mini-batches, and then process each mini batch once. An iteration over all mini batches in the dataset is called an \textit{epoch}. 
 
-\subsection{Designing Neural Networks}
+\subsubsection{Learning Rates and Learning Rate Scheduling}
+
+With stochastic gradient descend, we choose a separate learning rate $\epsilon_k$ for each epoch $k$. In the scope of this work, we only introduce \textit{exponential decay}, a very simple scheduling algorithm for the learning rate, although numerous other schedulers exist. \\
+Exponential starts with a learning rate $k_0$ for the initial batch and multiplies the learning rate by a factor of $0 < p < 1$ after each epoch. 
+\[
+k_n = k_{n - 1} * p
+\]
+A variant of exponential decay keeps the learning rate constant for a number epochs, until the improvement of error measured on the test dataset falls below a certain threshold $t$. This variant is called \textit{newbob}. Newbob scheduling is widely used by the speech recognition community. It was first introduced in \cite{berkely2000newbob}.
+
+\subsection{Neural Network Architectures}
 
 In practice, neural network layers are often formed by combining an affine transformation with a non-linear function. Since affine transformations of data vectors can be interpreted as matrix-vector multiplications, we can write a layer function in the following way, where $x_k$ is the input vector for $k$th layer, $W_k$ is the matrix defining the affine transformation of the $k$th layer, and $\varphi$ is a non-linear activation function of layer k.
 \[
@@ -144,6 +152,38 @@ Non-linear activation functions, or simply \textit{activation functions}, can be
 	\end{tikzpicture}
 	\captionof{figure}{Example of softmax for an input vector containing two values}
 \end{minipage}
+
+\subsection{The Cross Entropy Loss Function}
+
+There exist numerous loss functions for neural networks. Technically, any metric can be used as loss function, although loss functions do not necessarily have to be metrics. One of the most widely loss functions for classification tasks is the \textit{cross entropy} (\textit{CE}) function. For two  probability vectors $p$ and $q$, the cross entropy can be written as follows:
+
+\begin{align}
+H(p, q) = - \sum_{x} p(x) \log q(x)
+\label{eq:cross_entropy_loss}
+\end{align}
+
+The cross entropy loss function has several important properties. First, it minimizes the so called \textit{Kullback-Leibler} (\textit{KL}) divergence. The Kullback-Leibler divergence measures the distance of two probability distributions and was introduced in \cite{kullback1951information}. The Kullback-Leibler divergence is equal to zero if, and only if, the two given distributions are also equal. For two probability vectors $p$ and $q$, it can be written in the following way:
+
+\[
+D_{KL}(p, q) = -\sum_{x} p(x) \log \frac{p(x)}{q(x)}
+\]
+
+To show the connection between the cross entropy and the Kullback-Leibler divergence, we first assume that $q$ is the distribution we seek to optimize. This, $q$ is the distribution given by our training data, and can be assumed to be constant. We can also write the Kullback-Leibler divergence as follows: 
+
+% TODO: This formula has a syntax error. 
+\begin{align*}
+D_{KL}(p, q) &= -\sum_{x} p(x) \right[ \log p(x) - \log q(x) \left] \\
+& = -\sum_{x} p(x) \log p(x) -\sum_{x} p(x) \log q(x)
+\end{align*}
+
+Since we are not interested minimizing the distribution $p$, we can drop the first sum, and thus receive the cross entropy loss as in equation \ref{eq:cross_entropy_loss}. \\ \\
+When training neural networks, we often deal with classification problems. In this case, we seek to assign a single class to a given input sample, our target probability $p$ has exactly one element which is one, all other elements are zero. In this case, the cross entropy loss can be simplified to the so called \textit{negative log likelihood loss}, where $i$ is the index of the correct class in $p$. 
+
+\[
+D_{NLLL}(i, q) = -\log q(i)
+\]
+
+It has to be noted that this loss functions all operate on probability vectors: All elements have to be between $0$ and $1$ and sum to unity. Therefore, a softmax activation function is usually applied before calculating the loss. 
 
 \label{ch:realted_work}
 \subsection{ASR with HMM-based systems}
