@@ -147,19 +147,20 @@ Since this yields a time series of infinite length, signals are usually cut into
 
 When working with signals, especially for classification tasks, methods built upon the \textit{fourier transform} are used very often. The fourier transform transforms a signal $y(t)$ from its time domain to the frequency domain $Y(f)$. The resulting function $Y(f)$ is called the spectrum and gives the distribution of energy over all frequencies for the original signal $y(t)$. The fourier transformation can be defined for continuous or discrete signals, as well as for discrete and windowed signals. In the case of discrete and windowed signal, this is called the \textit{short time fourier transform}, which was first described in \cite{gabor1946theory}. It can formally be defined as follows, with an arbitrary window function $\sigma$:
 
-\[
+\begin{align}
 Y(n, \omega) = \sum_{m = -\infty}^{\infty} y(mt_A) \sigma((n - m)t_A) e^{-j \omega n}  
-\]
+\label{eq:stft}
+\end{align}
 
 The function $Y(n, \omega)$ gives the signal magnitude for a certain time window $n$ and a frequency window $\omega$. The time resolution depends reciprocally on the frequency resolution and vice versa. It is not possible to increase the frequency resolution while not decreasing the time resolution.\\ \\
 
 We can investigate the effects of a reverberated signal on the short time fourier transform by applying the same approach as in the previous chapter. The resulting short time fourier spectrum of the reverberated and sampled signal is given as follows.
 
-\begin{align*}
+\begin{align}
 Y(n, \omega) = \sum_{m = -\infty}^{\infty} w_0 y(mt_A) \sigma((n - m)t_A) e^{-j \omega n} + 
 \sum_{m = -\infty}^{\infty} \sum_{n} w_n y(mt_A - t_n) \sigma((n - m)t_A) e^{-j \omega n}  
 \label{eq:stftnoise}
-\end{align*}
+\end{align}
 
 Equation \ref{eq:stftnoise} shows that, for sufficiently large $t_n$ and $w_n$, significant noise is added to neighboring time windows. To recapitulate from the last chapter, the $t_n$ for a large room can be up to several tenths of seconds, while the window size for most applications is in the hundreds of milliseconds. 
 \\ \\
