@@ -51,6 +51,7 @@ Even with this simplification, it has been shown that such a feed forward neural
 As with most machine learning approaches, we train the neural  network using by using a \textit{training dataset}, containing a lot of data points sampled from the distribution we seek to approximate. We usually do not want the neural network to excel on the training data set, but rather to perform well on unseen data. This ability is called \textit{generalization}. We can approximate the error on unseen data by testing the neural network on a \textit{test dataset}. The test dataset must never be used for adjusting the neural network parameters, as this will make the test dataset worthless. The situation where a network performs well on the training dataset but worse on the test dataset is called \textit{overfitting}. The network basically memorizes the distribution of the training dataset, but fails to generalize on the test dataset. \\
 Given the definition in the past section, we can treat the problem of training a given neural network as finding appropriate parameters $\theta$ to minimize a certain \textit{error function} or \textit{loss function} $E = \mathcal{L}(y)$, where $E$ denotes the error and $y$ the network output. The error $E$ is usually some metric that judges the network performance based on the training data set. The state of the art algorithm for optimizing the parameters of a neural network is called \textit{stochastic gradient descend}, a special application of naive \textit{gradient descend}.
 \subsubsection{Naive Gradient Descent}
+\label{sec:gradient_descend}
 To apply gradient descend, we have to calculate the derivative of the loss function, given a certain input, with respect to a certain parameter $\theta_i$. Since this derivative is multi-dimensional, it is called the \textit{gradient}. Given a feed forward neural network, we can write the error as follows:
 
 \[
@@ -69,13 +70,13 @@ Thus, the derivative of the error with respect to a certain weight can be calcul
 \]
 
 Where $y_k$ is the result of $f^*_k$. \\
-We know that the gradient $\frac{\delta E}{\delta \theta_i}$ will become zero in a local minimum, local maximum or saddle point of our error $E$. Since the gradient also gives the direction of the steepest slope, we can simply update our parameters iteratively, until we converge into a local minimum. 
+We know that the gradient $\frac{\delta E}{\delta \theta_i}$ will become zero in a local minimum, local maximum or saddle point of our error $E$. Since the gradient also gives the direction of the steepest slope, we can simply update our parameters iteratively, until we converge into a local minimum.
 
 \[
-	\theta_i = \theta_i - \epsilon * \frac{\delta E}{\delta \theta_i}
+	\theta_{i, t+1} = \theta_{i, t} - \epsilon * \frac{\delta E_{t}}{\delta \theta_{i, t}}
 \]
 
-The parameter $\epsilon$ is the so-called learning rate. It has to be chosen by the designer of the neural network and influences not only the speed of convergence, but also whether the network converges at all. In literature, propagating the error gradient through a neural network is called \textit{backpropagation}. Backpropagation in the context of neural networks was first described in \cite{werbos1974beyond}.
+In this equation, $t$ denotes the current time and the parameter $\epsilon$ is the so-called learning rate. $\epsilon$ has to be chosen by the designer of the neural network and influences not only the speed of convergence, but also whether the network converges at all. In literature, propagating the error gradient through a neural network is called \textit{backpropagation}. Backpropagation in the context of neural networks was first described in \cite{werbos1974beyond}.
 
 \subsubsection{Stochastic Gradient Descend}
 
@@ -94,6 +95,15 @@ Exponential starts with a learning rate $k_0$ for the initial batch and multipli
 k_n = k_{n - 1} * p
 \]
 A variant of exponential decay keeps the learning rate constant for a number epochs, until the improvement of error measured on the test dataset falls below a certain threshold $t$. This variant is called \textit{newbob}. Newbob scheduling is widely used by the speech recognition community. It was first introduced in \cite{berkely2000newbob}.
+
+\subsubsection{Momentum}
+
+\textit{Momentum} is another technique that was shown to avoid local minima. When using momentum, we do not apply the gradient directly to our model, but rather use a linear combination of the gradient of the last batches. There are multiple versions to achieve momentum when using stochastic gradient descend. This work uses the notation introduced in \ref{polyak1964some} and throughly analyzed in the context of deep learning in \ref{sutskever2013importance}:
+\begin{align*}
+\upsilon_{i, t+1} &= \upsilon_{i, t} * \rho + \epsilon * \frac{\delta E_{t}}{\delta \theta_{i, t}} \\
+\theta_{i, t+1} &= \theta_{i, t} - \upsilon_{i, t+1}
+\end{align*}
+Here, $\upsilon$ is called the \textit{velocity}, it is a linear combination of the last velocity and the current gradient. $\rho$ is the term defining the momentum. It defines how much of the velocity is added to the current gradient. All other variables are defined as in section \ref{sec:gradient_descend}.
 
 \subsection{Neural Network Architectures}
 
@@ -298,14 +308,21 @@ This problem is called the \textit{decoding problem}, which is solved by the \te
 Given a hidden markov model topology, which is essentially only the number of states $n$ and the number of emission symbols $m$, as well as a training set of observations $O$, we can use the so called \textit{Baum-Welch} algorithm to optimize the initial state probabilities $\pi$, transmission probabilities $A$ and emission probabilities $B$. \\ \\
 We first define two auxiliary variables, given an observation $O$ and the parameters $\lambda$: $\gamma_t(i)$, the probability of being in state $i$ at time $t$ and $\xi_t(i, j)$, the probability of being $i$ at time $t$ and state $j$ at time $t + 1$.
 
+\begin{minipage}{0.45\textwidth}
 \begin{align*}
 \gamma_t(i) &= P(x_t = i|O,\lambda) \\
 &= \frac{P(x_t = i, O|\lambda)}{P(O|\lambda)} \\
-&=\frac{\alpha_t(i)\beta_t(i)}{\sum_{j = 1}^{N} \alpha_t(j) \beta_t(j)}  \\ \\ 
+&=\frac{\alpha_t(i)\beta_t(i)}{\sum_{j = 1}^{N} \alpha_t(j) \beta_t(j)} 
+\end{align*}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+\begin{align*}
 \xi_t(i, j) &= P(x_t = i,x_{t + 1} = j|O,\lambda) \\
 &= \frac{P(x_t = i,x_{t + 1} = j, O|\lambda)}{P(O|\lambda)} \\
 &=\frac{\alpha_t(i)a_{ij}\beta_{t + 1}(j)b_j(o_{t + 1})}{\sum_{i = 1}^{N} \sum_{j = 1}^{N} \alpha_t(i)a_{ij}\beta_{t + 1}(j)b_j(o_{t + 1})}
 \end{align*}
+\end{minipage}
 
 Using this two auxiliary variables, we can find new parameters $\lambda$ iteratively. Let $\pi^*$, $A^*$ and $B^*$ be the new parameters after one iteration of the Baum-Welch algorithm. 
 
@@ -319,7 +336,7 @@ It should be noted that the Baum-Welch algorithm is a special case of the \texti
 
 \subsection{Acoustic Model}
 \label{sec:acoustic_model}
-Before we explain the purpose of the acoustic model, we have to introduce the linguistic concepts of \textit{phonemes} and \textit{allophones}. Phonemes are sound atoms in a spoken language, that are relevant for the meaning of a spoken word. In other words, if a phoneme in a spoken word changes, the meaning of this word would change. Allophones are different pronunciation version of the same phoneme. \\ \\
+Before we explain the purpose of the acoustic model, we have to introduce the linguistic concepts of \textit{phonemes}, \textit{phones} and \textit{allophones}. Phonemes are sound atoms in a spoken language, that are relevant for the meaning of a spoken word. In other words, if a phoneme in a spoken word changes, the meaning of this word would change. Allophones are different pronunciation version of the same phoneme. \textit{Phones} are simply distinct sounds that are found in a language, regardless of whether swapping a phone changes the meaning of the word or not. \\ \\
 The acoustic model $A$ is responsible of giving us the probability of observing a certain phoneme $s$, given a certain feature vector $v$. 
 \[
 	A_s(v) = p(s|v)
@@ -349,7 +366,7 @@ More sophisticated acoustic models might be extended to classifying allophones, 
 		
 		\end{tikzpicture}
 	}
-	\captionof{figure}{Hidden markov model for an allophone model with three sub-states for start, middle and end}
+	\captionof{figure}{Hidden markov model for an allophone model with three sub-states for start $a_s$, middle $a_m$ and end $a_e$}
 	\label{fig:sub_three_allophone}
 	\hspace{1cm}
 \end{minipage}
@@ -357,10 +374,44 @@ More sophisticated acoustic models might be extended to classifying allophones, 
 \subsection{Dictionary}
 \label{sec:dictionary}
 The purpose of the dictionary is to describe the pronunciation of words in terms of phones. The dictionary is usually given. A common way to create a dictionary is to generate it using a set of rules and a list of words, and then fine-tune it by hand. The dictionary also contains different pronunciation variants for each word. 
+
+\begin{minipage}{\linewidth}
+	\makebox[\linewidth]{
+		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
+		
+		\node[state] (AX) at (0,0) {\textipa{a}};
+		\node[state] (EH) at (0,1) {\textipa{E}};
+		\node[state] (IX) at (0,2) {\textipa{X}};
+		
+		\node[state] (N) at (1,1) {\textipa{N}}
+		edge [<-,bend right=15] (AX)
+		edge [<-,bend right=15] (EH)
+		edge [<-,bend right=15] (IX);
+		\node[state] (EY) at (2,1) {\textipa{e}}
+		edge [<-,bend right=45] (N);
+		\node[state] (B) at (3,1) {\textipa{b}}
+		edge [<-,bend right=45] (EY);
+		
+		\node[state] (AX2) at (4,2) {\textipa{a}}
+		edge [<-,bend right=45] (B);
+		\node[state] (L) at (5,1) {\textipa{l}}
+		edge [<-,bend right=45] (B)
+		edge [<-,bend right=45] (AX2);
+		\node[state] (AXR) at (6,1) {\textrhookschwa }
+		edge [<-,bend right=45] (L);
+		\end{tikzpicture}
+	}
+	\captionof{figure}{Markov chain for pronunciation variants of the word \textit{enabler}}, where the state names correspond to their respective IPA phones
+	\label{fig:dictionary_hmm}
+	\hspace{1cm}
+\end{minipage}
+Figure \ref{fig:dictionary_hmm} shows such a model for a single word. Emissions are not shown, as each state in this model recursively refers the hidden markov model associated with the corresponding phone.
  
 \subsection{Language Model}
 \label{sec:language_model}
-The language model models the probability of word sequences, or in other terms, the probability of a word following a certain other world. Since languages tend to have many words, calculating the transmission probability for each given word pair would be intractable. Instead of this, so called $n$-tuple word models are used, which count the occurrence of word corpora of length $n$ in a large text. 
+The language model models the probability of word sequences, or in other terms, the probability of a word following a certain other world. Since languages tend to have many words, calculating the transmission probability for each given word pair would be intractable. Instead of this, so called $n$-gram language models are used. $n$-gram language models count the occurrence of word corpora of length $n$ in a large text. The occurrences are then used to calculate the probability of a word sequence, given the language model. 
+
+ 
 
 \subsection{Building Hidden Markov Models for Speech Recognition}
 
