@@ -27,7 +27,7 @@ This section will focus on a formal definition of reverberation and provide some
 
 \subsection{Continuous Signals and Systems}
 
-An audio signal can, as any other continuous \textit{signal}, be described as a continous function $y(t)$ where $t$ indicates the time. In literature, the argument $t$ is often dropped  when not explicitly needed to make equations easier to read.  
+Sound can, as any other continuous \textit{signal}, be described as a continous function $y(t)$ where $t$ indicates the time. In literature, the argument $t$ is often dropped  when not explicitly needed to make equations easier to read.  
 Signals can be fed into \textit{systems}, which in turn creates an output signal. In the context of this work, we only consider linear, time invariant systems. 
 \\
 Let $S$ be a linear time invariant system, $y_1$, $y_2$ continuous signals, and $c_1$, $c_2$ constants. The following properties hold if and only if a given system is an linear time invariant system: 
@@ -72,7 +72,7 @@ x(t) &= S\{y(t)\} \\
 Furthermore, we define the convolution operation, $*$, for two given signals as follows.
 
 \[
- (y_1 * y_2)(t) = \int_{-\infty}^{\infty} y(\tau)y_2(\tau - t) d\tau \tag{(convolution)}
+ (y_1 * y_2)(t) = \int_{-\infty}^{\infty} y(\tau)y_2(\tau - t) d\tau \tag{convolution}
 \]
 
 A convolution is thus an operation that combines two functions to create a new function. Given this definition, we can write the output signal $x$ of a system $S$ given an input signal $y$ as convolution with the impulse response $g$ of the system. 

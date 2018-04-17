@@ -209,7 +209,39 @@ D_{NLLL}(i, q) = -\log q(i)
 
 It has to be noted that this loss functions all operate on probability vectors: All elements have to be between $0$ and $1$ and sum to unity. Therefore, a softmax activation function is usually applied before calculating the loss. 
 
-TODO: Section about practical considerations, like data augmentation? 
+TODO: Section about picking data, and tips like like data augmentation? 
+
+\section{Time Delay Neural Networks}
+
+\textit{Time delay neural networks} were introduced by Waibel et. al in \cite{waibel1990phoneme}. The purpose time delay neural networks is to model long time dependencies in a robust way. The central idea behind this network type is to use several time frames of input, and to not use fully-connected layers, but rather layers that impose temporal structure. \\ \\
+To achieve this, the network not only receives the current frame $x_{0,t}$ as input, but also the $n$ previous frames $x_{0,t - 1}, ..., x_{0,t - n}$ as input. These frames are delayed in time, hence the name. Then, the a weighted sum is applied to the input, where the weights are learned parameters. This is called a \textit{TDNN unit} or \textit{TDNN layer}. TDNN layers can be stacked. If this is the case, preceding layers have to be extended to produce an output that contains multiple time frames. \\
+Formally, we can write for $x_{k,t}$, the output of the $k$-th TDNN layer at time t for the feature vectors with size one:
+\[
+x_{k,t} = \sum_{i = 1}^n w_{k, i} x_{k - 1, t - i}
+\]
+Where $w_{k, i}$ is denotes the $i$-th weight of the weighted sum used by the $k$-th layer. \\
+This equation can be rewritten using a discrete convolution operator. In this case $w_k$ is called a convolution kernel. 
+\[
+x_{k} = w_{k} * x_{k - 1}
+\]
+For feature vectors containing more than one feature, we introduce the concept of \textit{channels}. A channel can be considered a dimension in the feature. We can write this case for $p$ input channels and $q$ output channels, where $w_{k, j}$ is now a multi-dimensional kernel, producing the output channel $j$. Each TDNN layer will learn $q$ such kernels, while each kernel is large enough to take all $p$ input channels into account. 
+\[
+x_{k,j} = w_{k, j} * x_{k - 1}
+\]
+The concept of interpreting TDNN layers as convolutions is not new, but very useful. The generalization to multi-dimensional convolutions is called \textit{convolutional neural networks} and was shown to be incredibly successful \cite{krizhevsky2012imagenet}. Since TDNNs only apply the convolution over the time dimensions, it can be useful to interpret a TDNN as a so called \textit{finite impulse response} (\textit{FIR}) filter. As described in \cite{leon2015signale}, finite impulse response filters are inherently stable, as they the output is always a sum of finite elements. They also do not accumulate rounding errors. \\
+In \cite{waibel1990phoneme}, another interesting property is given: Since there are a lot less learned parameters than operations, a TDNN layer is forced to only focus on the most important features in the data, which leads to better generalization. This so-called \textit{parameter sharing} is achieved by averaging gradients of all operations for their respective weight, independently of the time context $t$. According to \cite{Goodfellow-et-al-2016}, this is one of the main reasons of success for convolutional neural networks in general. 
+
+\subsection{Pooling, Stride and Splicing}
+
+It should be noted that most successful convolutional architectures, as \cite{krizhevsky2012imagenet}, combine convolutional layers with pooling nonlinearities. This is done because pooling over the layer output enables to network to learn several different representations of the same concept, where the pooling will forward the most dominant to the next layer. \\
+Furthermore, it was shown that using larger steps in the convolution operation can lead to better results \textit{springenberg2014striving}. In the context of TDNNs, this means that we would not use adjacent frames for concatenating our input, but frames which are further apart. In literature, this is called \textit{stride} or \textit{strided convolution}, where the the stride $s$ gives the distance between concatenated frame. For a strided convolution, the input vector can be written as:
+\[
+x_{0,t}, x_{0,t + s}, ..., x_{0,t + ns}
+\] 
+It is also possible to define a list of indexes $S = (s_1, ..., s_n)$ to concatenate, which is especially useful if the distance between concatenated frames should not be uniform. This operation is called \textit{splicing} and was introduced by \cite{peddinti2015jhu}. In this case, our input vector becomes: 
+\[
+x_{0,ts_1}, x_{0,t + s_2}, ..., x_{0,t + s_n}
+\] 
 
 \section{Automated Speech Recognition}
 \label{ch:HMM_ASR}
@@ -251,7 +283,7 @@ Very often, the number of coefficients is reduced to get smaller feature vectors
 MEL_k = \int \sigma_k(f) * MEL(f) \delta f 
 \]
 
-In practice, a triangle window is often used. \\
+In practice, a triangle window is often used. In literature, the weighted sum is also referred to as \textit{filter bank} \cite{zhan1997vocal}. \\
 The $k$-th log-mel coefficient is then calculated by applying a logarithm:
 \[
 lMEL_k = \log(MEL_k) 
@@ -259,9 +291,10 @@ lMEL_k = \log(MEL_k)
 \\ \\
 In literature, \textit{Mel-Frequency-Cepstral-Coefficients} (\textit{MFCCs}) are often mentioned. They are not to be confused with log-mel coefficients. MFCCs can be calculated by applying an inverse discrete cosine transform on the the log-mel coefficients.
 
-\subsubsection{Vocal Tract Length Normalization}
-TODO: 
-https://www.lti.cs.cmu.edu/sites/default/files/CMU-LTI-97-150-T.pdf
+% Our experiments use VTLN with a warp factor of 1.0. According to the janus implementation, that does not do anything. 
+%\subsubsection{Vocal Tract Length Normalization}
+%TODO: 
+%https://www.lti.cs.cmu.edu/sites/default/files/CMU-LTI-97-150-T.pdf
 
 \subsection{Hidden Markov Models}
 To explain hidden markov models, we first introduce the concept of a \textit{markov chain}. A markov chain is a sequence of random variables $X = x_1, x_2, \dots. x_{t - 1}, x_{t} \dots, x_T$ and a finite number of states $s_1, \dots, s_n$, where the probability of each entering a certain state at time $t + 1$ at only depends on the state at time $t$:
