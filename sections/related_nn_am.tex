@@ -1,1 +1,24 @@
 \section{Acoustic Modelling using Neural Networks}
+
+When we use neural networks for acoustic modelling, we usually use the neural network as a part of the acoustic model. As mentioned in section \ref{sec:acoustic_model}, acoustic models combine some classification algorithm with a hidden markov model. Neural networks can be used as such a classification algorithm. However, the also be used to directly predict the likelihood of a state $s_i$ of the hidden markov model $p(x|s_i)$ given a feature $x$. This makes our model essentially a markov chain, since the states are now assumed to be directly observable. In \ref{hinton2012deep}, an excellent summary of the approach is given, although first experiments with neural network based acoustic modeling can be found in the early 90s \cite{bengio1993connectionist}. Notably, recent advancements were with robust acoustic modeling using TDNNs \cite{peddinti2015jhu}. \\ \\
+We can formalize this approach in the framework of hidden markov models by defining exactly a single symbol $v_i$ for each state $s_i$, with the following emission probabilities:
+\[
+b_j(k) = \delta_{bk}
+\]
+Where $\delta_{ij}$ is the so called \textit{Kronecker delta}.
+\[
+\delta_{ij} = \begin{cases}
+1 & i = j\\
+0 & \text{otherwise}
+\end{cases} 
+\]
+This formalization might seem unnecessary, but eases the transition from hidden markov model training to neural network training for certain training algorithms. In this case, our neural network is used to predict the likelihood $p(x|b_i)$ of a certain symbol $b_i$.\\
+We will now introduce several loss functions that can be used to train neural networks for this goal. 
+\subsection{Viterbi based Training}
+For viterbi based training, we use the viterbi algorithm to calculate the most likely state sequence. Then, each audio frame is labeled with its most likely state, according to the viterbi pass. We treat each state as a separate class and use this dataset for training a neural network model using the negative log likelihood loss function \cite{kitasr2018stueker}. When the neural network acoustic model finishes training, labels can be re-written, and another neural network acoustic model can be trained. This process can be iterated several times to improve results. 
+
+\subsection{Maximum Mutual Information Estimation}
+\textit{Maximum mutual information} estimation was introduced in \ref{bahl1986maximum} for estimating hidden markov model parameters. 
+
+
+ 

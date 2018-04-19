@@ -153,6 +153,7 @@ It should be noted that the Baum-Welch algorithm is a special case of the \texti
 
 \subsection{Acoustic Model}
 \label{sec:acoustic_model}
+TODO: Rewrite with acoustic score on word level. 
 Before we explain the purpose of the acoustic model, we have to introduce the linguistic concepts of \textit{phonemes}, \textit{phones} and \textit{allophones}. Phonemes are sound atoms in a spoken language, that are relevant for the meaning of a spoken word. In other words, if a phoneme in a spoken word changes, the meaning of this word would change. Allophones are different pronunciation version of the same phoneme. \textit{Phones} are simply distinct sounds that are found in a language, regardless of whether swapping a phone changes the meaning of the word or not. \\ \\
 The acoustic model $A$ is responsible of giving us the probability of observing a certain feature $o$, for a given phone $\wp$. 
 \[

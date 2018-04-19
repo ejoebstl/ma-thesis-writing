@@ -2,6 +2,9 @@
 \section{Neural Networks}
 \label{sec:neural_networks}
 
+
+TODO: Section about picking data, and tips like like data augmentation? 
+
 In machine learning research, the goal of a \textit{neural network} is to approximate arbitrary functions. The basic idea of neural networks, so called \textit{perceptrons}, were first introduced by Rosenblatt in \cite{rosenblatt1958perceptron}. While the first neural networks were biologically motivated, neural networks can be interpreted as composition of functions. The relation between these functions forms a directed graph. In this work, we will only cover \textit{feed forward neural networks}. They are called feed forward neural networks because there are no feedback connections: The relation between all functions in the neural network forms an acyclic directed graph. Feed forward networks are an important building block for many machine learning applications. 
 \\
 More formally, as described in \cite{Goodfellow-et-al-2016}, a feed forward neural network can be described as a model $y = f^*(x, \theta)$, approximating an existing function $y = f(x)$. In this example $x$ is the input, $y$ is the output and $\theta$ are the model parameters which are learned during training. $f$ is the function to approximate and $f^*$ is a composition of many functions with the parameters $\theta$. 
@@ -195,13 +198,21 @@ D_{KL}(p, q) &= - \sum_{x} p(x) \left[ \log p(x) - \log q(x) \right] \\
 & = - \sum_{x} p(x) \log p(x) -\sum_{x} p(x) \log q(x)
 \end{align*}
 
-Since we are not interested minimizing the distribution $p$, we can drop the first sum, and thus receive the cross entropy loss as in equation \ref{eq:cross_entropy_loss}. \\ \\
+Since we are not interested minimizing the distribution $p$, we can drop the first sum, and thus receive the cross entropy loss as in equation \ref{eq:cross_entropy_loss}. 
+\subsection{Cross Entropy Loss for Classification}
 When training neural networks, we often deal with classification problems. In this case, we seek to assign a single class to a given input sample, our target probability $p$ has exactly one element which is one, all other elements are zero. In this case, the cross entropy loss can be simplified to the so called \textit{negative log likelihood loss}, where $i$ is the index of the correct class in $p$. 
 
 \[
 D_{NLLL}(i, q) = -\log q(i)
 \]
 
-It has to be noted that this loss functions all operate on probability vectors: All elements have to be between $0$ and $1$ and sum to unity. Therefore, a softmax activation function is usually applied before calculating the loss. 
-
-TODO: Section about picking data, and tips like like data augmentation? 
+It has to be noted that this loss functions all operate on probability vectors: All elements have to be between $0$ and $1$ and sum to unity. Therefore, a softmax activation function is usually applied before calculating the loss. \\ \\
+It can further be shown that training using a cross entropy loss function trains the network to predict \textit{posteriori} probabilities \cite{richard1991neural}. Formally, given an network input $x$ and a class $c_i$, the network will predict $p(c_i|x)$. Since posteriors are inherently biased towards more frequent classes, we might want to estimate the likelihood $p(x|c_i)$ instead, depending on our use case. With bayes' theorem, we can write the posterior depending on the likelihood. 
+\[
+p(c_i|x) = \frac{p(x|c_i) p(c_i)}{p(x)}
+\]
+We now assume $p(x)$ to be equal for all $x$ and solve the equation for the likelihood:
+\[
+p(x|c_i) = \frac{p(c_i|x)}{p(c_i)}
+\]
+The probability of observing a certain class $p(c_i)$ is called a \textit{prior}. The prior can be estimated from the training data, or from the network output given a random sample of the training data set. Using the likelihood instead of the prior is especially important when the examples in the training set are highly unbalanced with regard of one or more classes. 
