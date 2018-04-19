@@ -1,0 +1,317 @@
+
+\section{Automated Speech Recognition}
+\label{ch:HMM_ASR}
+\textit{Automated speech recognition} (\textit{ASR}) is the task of generating a text transcription from a given sample of spoken language using a computer system. In literature, this problem is also referred to as \textit{speech to text} (\textit{SST}). \\
+Many approaches exist for solving this task. In this work, we will focus on automated speech recognition using systems that are based on hidden markov models for modeling language. The contents of this this section, except otherwise noted, is based upon the lecture Automated Speech Recognition of Karlsruhe Institute of Technology \cite{kitasr2018stueker}, which is in turn based on the books \cite{schukat1995automatische} and \cite{huang2001spoken}. \\ \\
+Automated speech recognition systems built on hidden markov models usually follows an architecture that separates \textit{preprocessing} of the audio signal and \textit{decoding}. The preprocessing transforms a brief time window of the audio signal into a feature vector. The decoding uses a statistical model assembled from an \textit{acoustic model}, a \textit{dictionary} and a \textit{language model} to calculate the most likely text representation, given the feature vectors.\\ \\
+
+More formally, we can treat the decoding as a classification problem. Let $a$ be a set of feature vectors, we seek to find the word sequence $w^*$ that was most likely for $a$ under our model. That can formally be written as follows, where $p(w|a)$ is the conditional probability of event $w$ given $a$:
+
+\[
+w^* = \underset{w}{\arg \max} \; P(w|a)
+\] 
+We do not know $P(w|a)$, but can re-write it using Bayes' theorem:
+
+\[
+w^* = \underset{w}{\arg \max} \; \frac{P(a|w) P(w)}{P(a)}
+\]
+
+Since $p(a)$ is the same for all possible word sequences $w$, we can drop the denominator from this equation:
+
+\begin{align}
+w^* = \underset{w}{\arg \max} \; P(a|w) P(w)
+\label{eq:asr_base_formula}
+\end{align}
+
+Equation \ref{eq:asr_base_formula} is called the \textit{fundamental equation of automated speech recognition}. While the fundamental equation seems straight forward, the difficult task is to create a reliable and computationally tractable model for approximating the probability of an acoustic feature given a word sequence, $p(a|w)$ and the probability of observing a word sequence $p(w)$. For this task, \textit{hidden markov models} built from the acoustic model, language model and dictionary are used. We will first describe the preprocessing, then briefly introduce hidden markov models, then introduce the three components and then show how they are combined into a single model, which is then used by the decoder. 
+
+\subsection{Preprocessing}
+Preprocessing transforms some audio signal into a sequence of feature vectors. To do so, we sample an audio signal using a microphone, then the signal is windowed and the spectrum is calculated for each window of the signal. This process is called short time fourier transform, as defined in the introduction in equation \ref{eq:stft}. Hence, the resulting spectral coefficients are also often called \textit{fourier coefficients}. It should be noted that there are more sophisticated approaches, notably the \textit{continous wavelet transform}, as described in \cite{mallat1999wavelet}, which has better properties in terms of time and frequency resolution. \\ \\
+There exist numerous approaches to transform the spectrum of a signal to useful features. In this work, we only discuss so called \textit{log-mel coefficients}. 
+\subsubsection{Log-Mel Coefficients}
+\label{sec:lmel}
+Log-mel coefficients were introduced in \cite{waibel1990phoneme} and \cite{waibel1983comparative}. This approach is physiologically motivated. To be specific, the mel-scale provides a better relative frequency resolution in lower frequencies. \\
+As given in \cite{poser1990speech}, the mel-scale is defined by the following relation to the regular frequency spectrum in Hertz: 
+\[
+MEL(f)=2595\log _{10}\left(1+{\frac {f}{700}}\right)
+\]
+Very often, the number of coefficients is reduced to get smaller feature vectors $(\sigma_1, ..., \sigma_n)$. This is done by summing all coefficients in certain windows $\sigma_k$ on the mel-scale: 
+\[
+MEL_k = \int \sigma_k(f) * MEL(f) \delta f 
+\]
+
+In practice, a triangle window is often used. In literature, the weighted sum is also referred to as \textit{filter bank} \cite{zhan1997vocal}. \\
+The $k$-th log-mel coefficient is then calculated by applying a logarithm:
+\[
+lMEL_k = \log(MEL_k) 
+\]
+A graphical example of log-mel coefficients can be seen in figure \ref{fig:tiny_input_signal}.
+\\ \\
+In literature, \textit{Mel-Frequency-Cepstral-Coefficients} (\textit{MFCCs}) are often mentioned. They are not to be confused with log-mel coefficients. MFCCs can be calculated by applying an inverse discrete cosine transform on the the log-mel coefficients.
+
+% Our experiments use VTLN with a warp factor of 1.0. According to the janus implementation, that does not do anything. 
+%\subsubsection{Vocal Tract Length Normalization}
+%TODO: 
+%https://www.lti.cs.cmu.edu/sites/default/files/CMU-LTI-97-150-T.pdf
+
+\subsection{Hidden Markov Models}
+To explain hidden markov models, we first introduce the concept of a \textit{markov chain}. A markov chain is a sequence of random variables $X = x_1, x_2, \dots. x_{t - 1}, x_{t} \dots, x_T$ and a finite number of states $s_1, \dots, s_n$, where the probability of each entering a certain state at time $t + 1$ at only depends on the state at time $t$:
+
+\[
+P(x_{t + 1} = s_{j_{t + 1}} | x_{t} = s_{j_t}, x_{t - 1} = s_{j_{t - 1}} \dots, x_{1} = s_{j_{1}}) = P(x_{t + 1} = s_{j_{t + 1}} | x_{t} = s_{j_t})
+\] 
+
+This assumption is also called the \textit{markov assumption}. If the probability of moving from state $s_{j_t}$ to state $s_{j_{t + 1}}$ is independent of the current time $t$, we call a markov chain \textit{homogeneous}. \\ \\
+We now extend our homogeneous markov chain and assume that we can no longer observe the state $s_{j_t}$ at a given time $t$ directly, but a symbol $v_k$ that was emitted. We formally define: 
+\begin{align*}
+S &= \{s_1, \dots, s_n\} \tag{states} \\
+V &= \{v_1, \dots, v_m\} \tag{symbols} \\
+A &= (a_{ij}) \tag{state tansmission probability} \\
+a_{ij} &= p(x_{t+1} = s_j | x_{t} = s_i) \\
+B(k) &= (b_j(k)) \tag{emisson probability} \\
+b_j(k) &= p(v_k | x_t = s_j) \\
+\pi &= (\pi_i) \tag{initial state probability} \\
+\pi_i &= p(x_1 = s_i)
+\end{align*}
+
+The tuple $\lambda = (S, V, A, B, \pi)$ specifies a \textit{hidden markov model}. We furthermore introduce the graphical notation for hidden markov models seen in figure \ref{fig:hmm}. Unspecified transitions and observations have probability zero. 
+
+\begin{minipage}{\linewidth}
+	\makebox[\linewidth]{
+		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
+		
+		\node[state] (s1) at (0,2) {$s_1$}
+		edge [loop above] node[above] {$a_{11}$} ();
+		\node[state] (s2) at (3,2) {$s_2$}
+		edge [<-,bend right=45] node[auto,swap] {$a_{12}$} (s1)
+		edge [->,bend left=45] node[auto,swap] {$a_{21}$} (s1)
+		edge [loop above] node[above] {$a_{22}$} ();
+		\node[state] (s3) at (6,2) {$s_3$}
+		edge [<-,bend right=45] node[auto,swap] {$a_{23}$} (s2)
+		edge [->,bend left=45] node[auto,swap] {$a_{32}$} (s2)
+		edge [loop above] node[above] {$a_{33}$} ();
+		% observations
+		\node[observation] (v1) at (1.5,0) {$v_1$}
+		edge [lightedge] node[auto] {$b_1(1)$} (s1)
+		edge [lightedge] node[auto,swap] {$b_2(1)$} (s2);
+		\node[observation] (v2) at (4.5,0) {$v_2$}
+		edge [lightedge] node[auto] {$b_2(2)$} (s2)
+		edge [lightedge] node[auto,swap] {$b_3(2)$} (s3);
+		\end{tikzpicture}
+	}
+	\captionof{figure}{Graphical example of a hidden markov model with three states and two observations}
+	\label{fig:hmm}
+	\hspace{1cm}
+\end{minipage}
+
+\subsubsection{Forward and Backward algorithm}
+Given a sequence of observed emissions, a so called observation $O = \{o_1, \dots, o_t\}$, a hidden markov model can be used to evaluate the probability of the observation, given the parameters $p(O, \lambda)$. For calculating this joint probability, the \textit{forward algorithm} or the \textit{backward algorithm} can be used used. For the forward algorithm, let $\alpha_T(j)$ be the probability of having observed $O$ and being in state $s_j$ at the end of the observation. We define recursively for any previous time $t$:
+\begin{align*}
+\alpha_1(j) &= \pi_j b_j(o_1) \\
+\alpha_t(j) &= b_j \sum_{i = 1}^{N} a_{ij}\alpha_{t-1}(i) \\
+p(O|\lambda) &= \sum_{j = 1}^{N} \alpha_T(j)
+\end{align*}
+For the backward algorithm, we define a similar recursive algorithm, starting from the latest time observation. Here, $\beta_0(j)$ is the probability of observing $O$ when starting from state $s_j$.
+\begin{align*}
+\beta_T(j) &= 1 \\
+\beta_t(j) &= \sum_{i = 1}^{N} a_{ij}b_j(o_{t+1}) \beta_{t+1}(i) \\
+p(O|\lambda) &= \sum_{j = 1}^{N} \beta_0(j)
+\end{align*}
+\subsubsection{Decoding Problem}
+Besides calculating the probability of an observation sequence, finding the most likely state sequence $X = \{X_1, X_2, \dots, X_T\}$ given an observation $O$ and a hidden markov model $\lambda$ is also of interest. 
+This problem is called the \textit{decoding problem}, which is solved by the \textit{viterbi algorithm}. In the scope of this work, a formal definition of the viterbi algorithm is not necessary. 
+
+\subsubsection{Learning Hidden Markov Model Parameters}
+Given a hidden markov model topology, which is essentially only the number of states $n$ and the number of emission symbols $m$, as well as a training set of observations $O$, we can use the so called \textit{Baum-Welch} algorithm to optimize the initial state probabilities $\pi$, transmission probabilities $A$ and emission probabilities $B$. \\ \\
+We first define two auxiliary variables, given an observation $O$ and the parameters $\lambda$: $\gamma_t(i)$, the probability of being in state $i$ at time $t$ and $\xi_t(i, j)$, the probability of being $i$ at time $t$ and state $j$ at time $t + 1$.
+
+\begin{minipage}{0.45\textwidth}
+\begin{align*}
+\gamma_t(i) &= P(x_t = i|O,\lambda) \\
+&= \frac{P(x_t = i, O|\lambda)}{P(O|\lambda)} \\
+&=\frac{\alpha_t(i)\beta_t(i)}{\sum_{j = 1}^{N} \alpha_t(j) \beta_t(j)} 
+\end{align*}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+\begin{align*}
+\xi_t(i, j) &= P(x_t = i,x_{t + 1} = j|O,\lambda) \\
+&= \frac{P(x_t = i,x_{t + 1} = j, O|\lambda)}{P(O|\lambda)} \\
+&=\frac{\alpha_t(i)a_{ij}\beta_{t + 1}(j)b_j(o_{t + 1})}{\sum_{i = 1}^{N} \sum_{j = 1}^{N} \alpha_t(i)a_{ij}\beta_{t + 1}(j)b_j(o_{t + 1})}
+\end{align*}
+\end{minipage}
+
+Using this two auxiliary variables, we can find new parameters $\lambda$ iteratively. Let $\pi^*$, $A^*$ and $B^*$ be the new parameters after one iteration of the Baum-Welch algorithm. 
+
+\begin{align*}
+b^*_j(k) &= \frac{\sum_{t = 1, o_t = v_k}^{T} \gamma_t(j)}{\sum_{t = 1}^{T} \gamma_t(j)} \\
+\pi^*_i &= \gamma_1(i) \\
+a_{ij}^*  &= \frac{\sum_{t = 1}^{T} \xi_t(i, j)}{\sum_{t = 1}^{T} \gamma_t(j)} 
+\end{align*}
+
+It should be noted that the Baum-Welch algorithm is a special case of the \textit{expected maximization} {\textit{EM}} algorithm applied to hidden markov models. The expected maximization algorithm gives a maximum-likelihood estimate of parameters, even if the data set used for the estimation has incomplete or missing values. A proof can be found in \cite{bilmes1998gentle}. 
+
+\subsection{Acoustic Model}
+\label{sec:acoustic_model}
+Before we explain the purpose of the acoustic model, we have to introduce the linguistic concepts of \textit{phonemes}, \textit{phones} and \textit{allophones}. Phonemes are sound atoms in a spoken language, that are relevant for the meaning of a spoken word. In other words, if a phoneme in a spoken word changes, the meaning of this word would change. Allophones are different pronunciation version of the same phoneme. \textit{Phones} are simply distinct sounds that are found in a language, regardless of whether swapping a phone changes the meaning of the word or not. \\ \\
+The acoustic model $A$ is responsible of giving us the probability of observing a certain feature $o$, for a given phone $\wp$. 
+\[
+	A_\wp(o) = p(o|\wp)
+\]
+Traditional acoustic models use classification schemes on feature vectors from the preprocessing. The most prominent technique here are gaussian mixture models, which combine several normal distributions to approximate a more complex distribution. The parameters of the acoustic model are usually learned using the Baum-Welch equations introduced in the previous section. \\ \\
+Acoustic models might be extended to classifying allophones, or even include context dependencies on neighboring phones. Antother approach would be to model the start, middle, and end part of an phone as three distinct hidden markov model states, which represent the phone together. This has the advantage of introducing some speed invariance into the model: It does no longer matter whether a certain phoneme was spoken very slowly or fast. Figure \ref{fig:sub_three_allophone} shows a hidden markov model for such an approach. 
+
+\begin{minipage}{\linewidth}
+	\makebox[\linewidth]{
+		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
+		
+		\node[state] (s1) at (0,1) {$a_s$}
+		edge [loop above] ();
+		\node[state] (s2) at (3,1) {$a_m$}
+		edge [<-,bend right=45] (s1)
+		edge [loop above] ();
+		\node[state] (s3) at (6,1) {$a_e$}
+		edge [<-,bend right=45] (s2)
+		edge [loop above] ();
+		% observations
+		\node[observation] (v1) at (0,0) {$a_s$}
+		edge [lightedge] (s1);
+		\node[observation] (v2) at (3,0) {$a_m$}
+		edge [lightedge] (s2);	
+		\node[observation] (v3) at (6,0) {$a_e$}
+		edge [lightedge] (s3);
+		
+		\end{tikzpicture}
+	}
+	\captionof{figure}{Hidden markov model for an allophone model with three sub-states for start $a_s$, middle $a_m$ and end $a_e$}
+	\label{fig:sub_three_allophone}
+	\hspace{1cm}
+\end{minipage}
+
+\subsection{Dictionary}
+\label{sec:dictionary}
+The purpose of the dictionary is to describe the pronunciation of words in terms of phones. The dictionary is usually given. A common way to create a dictionary is to generate it using a set of rules and a list of words, and then fine-tune it by hand. The dictionary also contains different pronunciation variants for each word. 
+
+\begin{minipage}{\linewidth}
+	\makebox[\linewidth]{
+		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
+		
+		\node[state] (AX) at (0,0) {\textscripta };
+		\node[state] (EH) at (0,1) {\textipa{E}};
+		\node[state] (IX) at (0,2) {\textbari };
+		
+		\node[state] (N) at (1,1) {\textipa{n}}
+		edge [<-,bend right=15] (AX)
+		edge [<-] (EH)
+		edge [<-,bend right=-15] (IX);
+		\node[state] (EY) at (2,1) {\textipa{e}\textsci }
+		edge [<-,bend right=45] (N);
+		\node[state] (B) at (3,1) {\textipa{b}}
+		edge [<-,bend right=45] (EY);
+		
+		\node[state] (AX2) at (4,1) {\textscripta }
+		edge [<-,bend right=45] (B);
+		\node[state] (L) at (5,1) {\textipa{l}}
+		edge [<-,bend right=-45] (B)
+		edge [<-,bend right=45] (AX2);
+		\node[state] (AXR) at (6,1) {\textrhookschwa }
+		edge [<-,bend right=45] (L);
+		\end{tikzpicture}
+	}
+	\captionof{figure}{Markov chain for pronunciation variants of the word \textit{enabler}, where the state names correspond to their respective IPA phones}
+	\label{fig:dictionary_hmm}
+	\hspace{1cm}
+\end{minipage}
+Figure \ref{fig:dictionary_hmm} shows such a model for a single word. Emissions are not shown, as each state in this model refers the hidden markov model associated with the corresponding phoneme. Transitions that are not modeled in the dictionary are constant zero. 
+ 
+\subsection{Language Model}
+\label{sec:language_model}
+The language model models the probability of word sequences, or in other terms, the probability of a word following a certain other world. Since languages tend to have many words, calculating the transmission probability for each given word pair would be intractable. Instead of this, so called $n$-gram language models are used. $n$-gram language models count the occurrence of word tuples of length $n$ in a large text corpora. The occurrences are then used to calculate the probability of a word $w_1$, given $n - 1$ predecessors $w_2, ..., w_n$.
+
+\[
+L(w_1) = P(w_1|w_2,...,w_n)
+\]
+
+For a $2$-gram model, the transition probabilities can be directly derived by norming the count of occurrences for each successor. An example for such a model is shown in figure \ref{fig:lm_hmm}. For larger $n$, we have to have a state for each feasible combination of words, which quickly becomes intractable. 
+
+\begin{minipage}{\linewidth}
+	\makebox[\linewidth]{
+		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
+		
+		\node[state,minimum size=1cm] (that) at (2,0) {that}
+		edge [loop below] node[auto] {$\frac{1}{2}$} ();
+		\node[state,minimum size=1cm] (is) at (0,3) {is}
+		edge [<-,bend right=15] node[auto, swap] {$\frac{1}{4}$} (that)
+		edge [->,bend right=-15] node[auto] {$\frac{1}{4}$} (that)
+		edge [loop above] node[auto] {$\frac{1}{4}$} ();
+		\node[state,minimum size=1cm] (not) at (4,3) {not}
+		edge [<-,bend right=-15] node[auto] {$0$} (that)
+		edge [<-,bend right=15] node[auto,swap] {$\frac{1}{2}$} (is)
+		edge [->,bend right=15] node[auto, swap] {$0$} (that)
+		edge [->,bend right=-15] node[auto] {$1$} (is)
+		edge [loop above] node[auto] {$0$} ();
+		\end{tikzpicture}
+	}
+	\captionof{figure}{Markov chain built from a $2$-gram language model for the sentence \textit{``That that is, is; that that is not, is not."}, omitting start and end literals}
+	\label{fig:lm_hmm}
+	\hspace{1cm}
+\end{minipage}
+
+
+\subsection{Decoding Process}
+
+The decoding step combines the acoustic model, dictionary, and language model are combined into one large model to find the text for a given observed utterance. This section describes decoding in a very fundamental way. In real-world applications, may more details are considered.  \cite{huang2001spoken} gives a very detailed description of different decoding approaches.\\
+It is possible decompose any word $w_i$ to a possible sequences of phones $(\wp_1, ..., \wp_n)$, using the dictionary. We can re-write the fundamental formula of speech recognition in the following way, using the language and acoustic model:
+\begin{align*}
+W^* &= \underset{W}{\arg \max} \; P(X|W) P(W) \\
+&= \underset{W}{\arg \max} \; \left( \sum_{w_i \in W} \sum_{\wp_i \in w_i} A_{\wp_i}(o_i) \right) \sum_{w_i \in W} L(w_i)
+\end{align*}
+Here, $X = (o_1, ..., o_n)$ is an observation sequence, and $W = (w_1, ..., w_n)$ is a word sequence. \\ \\ 
+We can also interpret the combination of the acoustic model, language model and dictionary as one large hidden markov model. With this interpretation, we can find the optimal solution $W^*$ with a search through the hidden markov model. We can do so by using a greedy breath-first search with a heuristic, that picks the next state to visit. Such a search algorithm is also called \textit{A* algorithm} in literature \cite{hart1968formal}. However, this approach is not tractable in practice, as the model becomes very large. Therefore, a so-called \textit{beam search} is used. A beam search simply discards paths with a probability that fall below a certain threshold, which we call $mb$. \\ \\
+For a real-world implementation we consider three more details. First, we want to avoid multiplications, because they are computationally expensive. We therefore maximize the negative log-likelihood instead of raw probabilities. Second, we add the scaling factor $lz$ to weight the acoustic model versus the language model, which was shown to be very useful in practice. Also we add another parameter $lp$ which can be used to penalize too short or too long word sequences. 
+\begin{align*}
+W^* &= \underset{W}{\arg \max} \; -\log\left(P(X|W) P(W)^{lz} |W|^{lp} \right) \\
+&= \underset{W}{\arg \max} \; -\log P(X|W) - lz\log P(W) -lp\log(|W|) 
+\end{align*}
+
+The master beam $mb$, and the coefficients $lz$ and $lp$ are hyper-parameters that have to be tuned for optimal results. 
+
+\subsection{Error Metrics for Automated Speech Recognition}
+Every machine learning needs to be tested on data it has not seen before. For this purpose, \textit{error metrics} are used. Error metrics provide a way to objectively measure the performance of a machine learning system. In the field of automated speech recognition, two dominant error metrics are used: \textit{Word error rate} (\textit{WER}) and \textit{frame error rate} (\textit{FER}).
+
+\subsubsection{Frame Error Rate}
+
+Frame error rate simply measures the classification error on frame level and is mostly used in connection with acoustic models. It can be calculated by counting how often the class of a frame was predicted incorrectly by the acoustic model. Given a sequence of classes predicted by our model $Y* = (y^*_1, ..., y^*_n)$ and a sequence of reference labels $Y = (y_1, ..., y_n)$, we can write the frame error rate as follows:
+
+\[
+\operatorname{FER}(Y^*, Y) = \frac{1}{n} \sum_{i = 0}^n 1|_{y^*_i = y_i} 
+\]
+
+Here, $1|_{y^*_i = y_i}$ is an indicator function that is one if $y^*_i$ and $y_i$ are equal and zero otherwise. The frame error rate is always between zero and one and is usually given as a percentage. 
+\\ \\ 
+The interpretation of what a class represents depends on the acoustic model. It could, for example, be a phoneme, an allophone or a hidden markov model state. 
+
+\subsubsection{Word Error Rate}
+The word error rate is the most common error metric when testing complete speech recognition tools. Before we explain the word error rate, we introduce the so called \textit{Levenshtein distance}. The Levenshtein distance of to sequences $A = (a_1,...,a_n)$ and $B=(b_1,...,b_n)$ gives the minimum number of insertions, deletions and substitutions which are necessary to transform $A$ to $B$. The Levenshtein distance can recursively defined as:
+\begin{align*}
+\operatorname{LD}_{0,j}(A, B) &= j \\
+\operatorname{LD}_{i,0}(A, B) &= i \\
+\operatorname{LD}_{i,j}(A, B) &= \begin{cases}
+	\operatorname{LD}_{i-1,j-1}(A, B) + 0 & \text{if} \; a_i = b_i \\
+	\min \begin{cases}
+		\operatorname{LD}_{i-1,j}(A, B) + 1 \\
+		\operatorname{LD}_{i,j-1}(A, B) + 1 \\
+		\operatorname{LD}_{i-1,j-1}(A, B) + 1\\
+	\end{cases} & \text{ otherwise}
+\end{cases}
+\end{align*}
+
+The Levenshtein distance of the whole sequence is:
+\[
+\operatorname{LD}(A, B) = \operatorname{LD}_{|A|, |B|}(A, B)
+\]
+The word error rate $\operatorname{WER}(W^*, W)$ of two word sequences $W*$ and $W$ can now be defined using the Levenshtein distance: \\
+\[
+\operatorname{WER}(W^*, W) = \frac{\operatorname{LD}(W^*,W)}{|W|}
+\]
+Here, $W$ is the \textit{reference hypothesis}, $W^*$ is the output for the system we seek to benchmark.
