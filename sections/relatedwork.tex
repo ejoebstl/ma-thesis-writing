@@ -214,7 +214,7 @@ TODO: Section about picking data, and tips like like data augmentation?
 \section{Time Delay Neural Networks}
 
 \textit{Time delay neural networks} were introduced by Waibel et. al in \cite{waibel1990phoneme}. The purpose time delay neural networks is to model long time dependencies in a robust way. The central idea behind this network type is to use several time frames of input, and to not use fully-connected layers, but rather layers that impose temporal structure. \\ \\
-To achieve this, the network not only receives the current frame $x_{0,t}$ as input, but also the $n$ previous frames $x_{0,t - 1}, ..., x_{0,t - n}$ as input. These frames are delayed in time, hence the name. Then, the a weighted sum is applied to the input, where the weights are learned parameters. This is called a \textit{TDNN unit} or \textit{TDNN layer}. TDNN layers can be stacked. If this is the case, preceding layers have to be extended to produce an output that contains multiple time frames. \\
+To achieve this, the network not only receives the current frame $x_{0,t}$ as input, but also the $n$ previous frames $x_{0,t - 1}, ..., x_{0,t - n}$ as input. These frames are delayed in time, hence the name. Then, the a weighted sum is applied to the input, where the weights are learned parameters. This is called a \textit{TDNN unit} or \textit{TDNN layer} with a filter kernel of size $n$. TDNN layers can be stacked. If this is the case, preceding layers have to be extended to produce an output that contains multiple time frames. \\
 Formally, we can write for $x_{k,t}$, the output of the $k$-th TDNN layer at time t for the feature vectors with size one:
 \[
 x_{k,t} = \sum_{i = 1}^n w_{k, i} x_{k - 1, t - i}
@@ -242,6 +242,98 @@ It is also possible to define a list of indexes $S = (s_1, ..., s_n)$ to concate
 \[
 x_{0,ts_1}, x_{0,t + s_2}, ..., x_{0,t + s_n}
 \] 
+
+\subsection{A visual Example}
+
+TDNNs allow a straight-forward interpretation of their layer outputs as multi-dimensional signals, which makes visualization over time helpful. We want to conclude this section with the visualization of a tiny TDNN that was trained to distinguish $53$ phones in an audio sample. We use $40$ log-mel coefficients as features. Log-mel coefficients are introduced in section \ref{sec:lmel}. \\ \\
+Figure \ref{fig:tiny_tdnn} shows our tiny TDNN model in the time domain. Our input vector has $40$ channels and a time context of $21$. The first TDNN layer uses $40$ filter kernels of size $5*40$ and a stride of $4$. It and is followed by an L2 norm with group size $2$, resulting in a layer output with $5$ time frames and $20$ channels. The second TDNN layer uses $40$ filter kernels of size $5*20$ and a stride of $5$. It is followed by an L2 norm with group size $2$, resulting in an output spanning $1$ time frame and $20$ channels. In the end, we apply a linear layer that maps the $20$ channels to $53$ phone classes, including special classes for silence and noise.\\
+\begin{minipage}{\linewidth}
+	\vspace{5mm}
+	\begin{tikzpicture}[x=1.8cm, y=1.5cm]
+	% Layers
+	\node[text width=3cm] at (-1,0) {Input ($21*40$)};
+	\foreach \m in {2,3,...,20}
+	\node [tdnn neuron] (input-\m) at (\m*0.25,0) {};
+	
+	\node [tdnn neuron, label=below:$x_{t - 10}$] (input-1) at (1*0.25,0) {};
+	\node [tdnn neuron, label=below:$x_{t + 10}$] (input-21) at (21*0.25,0) {};
+	
+	\node[text width=3cm] at (-1,0.5) {TDNN/LP 1};
+	\node[text width=3cm] at (-1,1) {Hidden ($5*8$)};
+	\foreach \m [count=\y] in {1,2,...,5}
+	\node [tdnn neuron] (hidden-1-\m) at (\y*0.25*4 - 0.25,1) {};
+	
+	\node[text width=3cm] at (-1,1.5) {TDNN/LP 2};
+	\node[text width=3cm] at (-1,2) {Output ($1*6$)};
+	\node [tdnn neuron, label=above:$y_{t}$] (classify-1) at (1*0.25 + 10 * 0.25,2) {};
+	
+	%Edges
+	\foreach \m [
+	evaluate=\m as \nstart using int(((\m - 1) * 4) + 1),
+	evaluate=\m as \nstep using int(((\m - 1) * 4) + 2),
+	evaluate=\m as \nend using int(((\m - 1)* 4) + 5)] in {1,2,...,5}
+	\foreach \i in {\nstart,\nstep,...,\nend}
+	\draw (input-\i.north) -- (hidden-1-\m); % Error happens here. 
+	
+	\foreach \m in {1,2,...,5}
+	\draw (hidden-1-\m) -- (classify-1);
+		
+	\end{tikzpicture}
+	\captionof{figure}{Tiny TDNN model}
+	\label{fig:tiny_tdnn}
+	\vspace{5mm}
+\end{minipage}
+
+We trained this tiny TDNN model on $14$ hours of voice data using the newbob-learning rate scheduler. Figures \ref{fig:tiny_tdnn_1_weights}, \ref{fig:tiny_tdnn_2_weights} and \ref{fig:tiny_classifier_weights} show the learned filter kernels and weights after training. Warmer colors indicate higher values, the horizontal axis corresponds to time, while the vertical axis corresponds to channels. For the first TDNN layer, it can be seen that filters which are in the same pooling group learn similar parameters. For the other layers, the filters are harder to implement, as TDNN layers do not preserve the ordering of channels. They are still shown for completeness. \\
+\noindent
+\weightillustration
+	{images/tdnn_example/large_weight_tdnn_1.png}
+	{$40$ learned filters of TDNN layer $1$}
+	{fig:tiny_tdnn_1_weights}
+\weightillustration
+	{images/tdnn_example/large_weight_tdnn_2.png}
+	{$24$ learned filters of TDNN layer $2$}
+	{fig:tiny_tdnn_2_weights}
+\smallweightillustration
+	{images/tdnn_example/large_weight_classifier.png}
+	{Affine transformation learned by the final linear layer}
+	{fig:tiny_classifier_weights}
+
+We now visualize the outputs of different layers given an audio sample of a few seconds length. Figures \ref{fig:tiny_input_signal} to \ref{fig:tiny_softmax_out} show the output of the TDNN and LP layers, as well as the output after the linear and the softmax layer. Such layer outputs are also called \textit{activations}. The audio sample is shown in Figure \ref{fig:tiny_input_signal} and originates from a female speaker saying \textit{``And these are always periods, ladies and gentlemen, accompanied by turbulence.''}.
+
+\noindent
+\weightillustration
+	{images/tdnn_example/large_0_input.png}
+	{Input features extracted from the audio sample}
+	{fig:tiny_input_signal}
+\weightillustration
+	{images/tdnn_example/large_1_tdnn_1.png}
+	{Output of the first TDNN layer}
+	{fig:tiny_tdnn_1_out}
+\weightillustration
+	{images/tdnn_example/large_4_lp_1.png}
+	{Output of the first L2 pooling layer}
+	{fig:tiny_lp_1_out}
+\weightillustration
+	{images/tdnn_example/large_5_tdnn_2.png}
+	{Output of the second TDNN layer}
+	{fig:tiny_tdnn_2_out}
+\weightillustration
+	{images/tdnn_example/large_8_lp_2.png}
+	{Output of the second L2 pooling layer}
+	{fig:tiny_lp_2_out}
+\weightillustration
+	{images/tdnn_example/large_10_classifier.png}
+	{Output of the linear layer}
+	{fig:tiny_classifier_out}
+\weightillustration
+	{images/tdnn_example/large_11_softmax.png}
+	{Output of the softmax layer, the final network output}
+	{fig:tiny_softmax_out}
+
+
+%24: PaddyAshdown_2011X\PaddyAshdown_2011X_71_6: and these are always periods ladies and gentlemen accompanied by turbulence
+
 
 \section{Automated Speech Recognition}
 \label{ch:HMM_ASR}
@@ -273,6 +365,7 @@ Equation \ref{eq:asr_base_formula} is called the \textit{fundamental equation of
 Preprocessing transforms some audio signal into a sequence of feature vectors. To do so, we sample an audio signal using a microphone, then the signal is windowed and the spectrum is calculated for each window of the signal. This process is called short time fourier transform, as defined in the introduction in equation \ref{eq:stft}. Hence, the resulting spectral coefficients are also often called \textit{fourier coefficients}. It should be noted that there are more sophisticated approaches, notably the \textit{continous wavelet transform}, as described in \cite{mallat1999wavelet}, which has better properties in terms of time and frequency resolution. \\ \\
 There exist numerous approaches to transform the spectrum of a signal to useful features. In this work, we only discuss so called \textit{log-mel coefficients}. 
 \subsubsection{Log-Mel Coefficients}
+\label{sec:lmel}
 Log-mel coefficients were introduced in \cite{waibel1990phoneme} and \cite{waibel1983comparative}. This approach is physiologically motivated. To be specific, the mel-scale provides a better relative frequency resolution in lower frequencies. \\
 As given in \cite{poser1990speech}, the mel-scale is defined by the following relation to the regular frequency spectrum in Hertz: 
 \[
@@ -518,6 +611,9 @@ W^* &= \underset{W}{\arg \max} \; -\log\left(P(X|W) P(W)^{lz} |W|^{lp} \right) \
 
 The master beam $mb$, and the coefficients $lz$ and $lp$ are hyper-parameters that have to be tuned for optimal results. 
 
+\subsection{Error Metrics for Automated Speech Recognition}
+%% TODO description of the Word-Error-Rate and Frame-Error-Rate metric. 
+
 \subsubsection{Draft}
 
 This chapter will be focused on how ASR is done with Janus. It will contain: 
@@ -532,17 +628,6 @@ This chapter will be focused on how ASR is done with Janus. It will contain:
 	\end{itemize}
 	\item A description of the Word-Error-Rate and Frame-Error-Rate metric. 
 	\item An explanation about training HMM-based systems using the expected maximisation algorithm. 
-\end{itemize}
-
-\subsection{Time Delay Neural Networks}
-\label{ch:TDNN}
-The goal of this chaper is to provide a short introduction to neural networks, 
-as well as explain the concept of TDNNs. It will contain:
-\begin{itemize}
-	\item A brief intro to MLPs and SGD
-	\item Parameter coupling (convolutional neural networks)
-	\item Time delay neural networks
-	\item Interpretation of TDNNs as FIR filters
 \end{itemize}
 
 \subsection{Acoustic Modelling using Neural Networks}

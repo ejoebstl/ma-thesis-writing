@@ -94,6 +94,13 @@
 		circle,
 		draw,
 		minimum size=1cm
+	},	
+	tdnn neuron/.style={
+		rectangle,
+		draw=black,
+		fill=black!10,
+		minimum height=0.5cm,
+		minimum width=0.1cm 
 	},
 	neuron vmissing/.style={
 		draw=none, 
@@ -114,6 +121,26 @@
 \tikzstyle{lightedge}=[<-,dotted]
 \tikzstyle{mainstate}=[state,thick]
 \tikzstyle{mainedge}=[<-,thick]
+
+\newcommand{\weightillustration}[3]{
+\begin{minipage}{\linewidth}
+	\centering
+	\vspace{5mm}	
+	\includegraphics[angle=90,width=0.9\linewidth]{#1}
+	\captionof{figure}{#2}
+	\label{#3}
+\end{minipage}
+}
+
+\newcommand{\smallweightillustration}[3]{
+	\begin{minipage}{\linewidth}
+		\centering
+		\vspace{5mm}	
+		\includegraphics[angle=90,width=0.5\linewidth]{#1}
+		\captionof{figure}{#2}
+		\label{#3}
+	\end{minipage}
+}
 
 %% Set PDF metadata
 \setpdf
