@@ -381,6 +381,7 @@ The $k$-th log-mel coefficient is then calculated by applying a logarithm:
 \[
 lMEL_k = \log(MEL_k) 
 \]
+A graphical example of log-mel coefficients can be seen in figure \ref{fig:tiny_input_signal}.
 \\ \\
 In literature, \textit{Mel-Frequency-Cepstral-Coefficients} (\textit{MFCCs}) are often mentioned. They are not to be confused with log-mel coefficients. MFCCs can be calculated by applying an inverse discrete cosine transform on the the log-mel coefficients.
 
@@ -612,7 +613,44 @@ W^* &= \underset{W}{\arg \max} \; -\log\left(P(X|W) P(W)^{lz} |W|^{lp} \right) \
 The master beam $mb$, and the coefficients $lz$ and $lp$ are hyper-parameters that have to be tuned for optimal results. 
 
 \subsection{Error Metrics for Automated Speech Recognition}
-%% TODO description of the Word-Error-Rate and Frame-Error-Rate metric. 
+Every machine learning needs to be tested on data it has not seen before. For this purpose, \textit{error metrics} are used. Error metrics provide a way to objectively measure the performance of a machine learning system. In the field of automated speech recognition, two dominant error metrics are used: \textit{Word error rate} (\textit{WER}) and \textit{frame error rate} (\textit{FER}).
+
+\subsubsection{Frame Error Rate}
+
+Frame error rate simply measures the classification error on frame level and is mostly used in connection with acoustic models. It can be calculated by counting how often the class of a frame was predicted incorrectly by the acoustic model. Given a sequence of classes predicted by our model $Y* = (y^*_1, ..., y^*_n)$ and a sequence of reference labels $Y = (y_1, ..., y_n)$, we can write the frame error rate as follows:
+
+\[
+\operatorname{FER}(Y^*, Y) = \frac{1}{n} \sum_{i = 0}^n 1|_{y^*_i = y_i} 
+\]
+
+Here, $1|_{y^*_i = y_i}$ is an indicator function that is one if $y^*_i$ and $y_i$ are equal and zero otherwise. The frame error rate is always between zero and one and is usually given as a percentage. 
+\\ \\ 
+The interpretation of what a class represents depends on the acoustic model. It could, for example, be a phoneme, an allophone or a hidden markov model state. 
+
+\subsubsection{Word Error Rate}
+The word error rate is the most common error metric when testing complete speech recognition tools. Before we explain the word error rate, we introduce the so called \textit{Levenshtein distance}. The Levenshtein distance of to sequences $A = (a_1,...,a_n)$ and $B=(b_1,...,b_n)$ gives the minimum number of insertions, deletions and substitutions which are necessary to transform $A$ to $B$. The Levenshtein distance can recursively defined as:
+\begin{align*}
+\operatorname{LD}_{0,j}(A, B) &= j \\
+\operatorname{LD}_{i,0}(A, B) &= i \\
+\operatorname{LD}_{i,j}(A, B) &= \begin{cases}
+	\operatorname{LD}_{i-1,j-1}(A, B) + 0 & \text{if} \; a_i = b_i \\
+	\min \begin{cases}
+		\operatorname{LD}_{i-1,j}(A, B) + 1 \\
+		\operatorname{LD}_{i,j-1}(A, B) + 1 \\
+		\operatorname{LD}_{i-1,j-1}(A, B) + 1\\
+	\end{cases} & \text{ otherwise}
+\end{cases}
+\end{align*}
+
+The Levenshtein distance of the whole sequence is:
+\[
+\operatorname{LD}(A, B) = \operatorname{LD}_{|A|, |B|}(A, B)
+\]
+The word error rate $\operatorname{WER}(W^*, W)$ of two word sequences $W*$ and $W$ can now be defined using the Levenshtein distance: \\
+\[
+\operatorname{WER}(W^*, W) = \frac{\operatorname{LD}(W^*,W)}{|W|}
+\]
+Here, $W$ is the \textit{reference hypothesis}, $W^*$ is the output for the system we seek to benchmark.
 
 \subsubsection{Draft}
 
