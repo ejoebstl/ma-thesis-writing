@@ -122,6 +122,7 @@ Besides calculating the probability of an observation sequence, finding the most
 This problem is called the \textit{decoding problem}, which is solved by the \textit{viterbi algorithm}. In the scope of this work, a formal definition of the viterbi algorithm is not necessary. 
 
 \subsubsection{Learning Hidden Markov Model Parameters}
+\label{sec:learning_hmm}
 Given a hidden markov model topology, which is essentially only the number of states $n$ and the number of emission symbols $m$, as well as a training set of observations $O$, we can use the so called \textit{Baum-Welch} algorithm to optimize the initial state probabilities $\pi$, transmission probabilities $A$ and emission probabilities $B$. \\ \\
 We first define two auxiliary variables, given an observation $O$ and the parameters $\lambda$: $\gamma_t(i)$, the probability of being in state $i$ at time $t$ and $\xi_t(i, j)$, the probability of being $i$ at time $t$ and state $j$ at time $t + 1$.
 
@@ -260,7 +261,7 @@ For a $2$-gram model, the transition probabilities can be directly derived by no
 
 
 \subsection{Decoding Process}
-
+TODO: Rewrite correctly. We can only not use viterbi if we do single-pass decoding. 
 The decoding step combines the acoustic model, dictionary, and language model are combined into one large model to find the text for a given observed utterance. This section describes decoding in a very fundamental way. In real-world applications, may more details are considered.  \cite{huang2001spoken} gives a very detailed description of different decoding approaches.\\
 It is possible decompose any word $w_i$ to a possible sequences of phones $(\wp_1, ..., \wp_n)$, using the dictionary. We can re-write the fundamental formula of speech recognition in the following way, using the language and acoustic model:
 \begin{align*}

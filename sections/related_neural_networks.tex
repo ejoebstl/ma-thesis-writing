@@ -56,15 +56,14 @@ To apply gradient descend, we have to calculate the derivative of the loss funct
 E = \mathcal{L}(f^*_n \dots (f^*_2(f^*_1(x, \theta_1), \theta_2) \dots, \theta_n))
 \]
 
-Thus, the derivative of the error with respect to a certain weight can be calculated by applying the chain rule.  
-
+Thus, the derivative of the error with respect to a certain weight can be calculated by applying the chain rule.
 \[
-\frac{\delta E}{\delta \theta_i} = 
-	\frac{\delta \mathcal{L}}{\delta y_n}
-	\frac{\delta f^*_n}{\delta y_{n - 1}}
+\frac{\partial E}{\partial \theta_i} = 
+	\frac{\partial \mathcal{L}}{\partial y_n}
+	\frac{\partial f^*_n}{\partial y_{n - 1}}
 	\dots
-	\frac{\delta f^*_{i + 2}}{\delta y_i}
-	\frac{\delta f^*_i}{\delta \theta_i}
+	\frac{\partial f^*_{i + 2}}{\partial y_i}
+	\frac{\partial f^*_i}{\partial \theta_i}
 \]
 
 Where $y_k$ is the result of $f^*_k$. \\
@@ -202,9 +201,10 @@ Since we are not interested minimizing the distribution $p$, we can drop the fir
 \subsection{Cross Entropy Loss for Classification}
 When training neural networks, we often deal with classification problems. In this case, we seek to assign a single class to a given input sample, our target probability $p$ has exactly one element which is one, all other elements are zero. In this case, the cross entropy loss can be simplified to the so called \textit{negative log likelihood loss}, where $i$ is the index of the correct class in $p$. 
 
-\[
+\begin{align}
 D_{NLLL}(i, q) = -\log q(i)
-\]
+\label{eq:nlll}
+\end{align}
 
 It has to be noted that this loss functions all operate on probability vectors: All elements have to be between $0$ and $1$ and sum to unity. Therefore, a softmax activation function is usually applied before calculating the loss. \\ \\
 It can further be shown that training using a cross entropy loss function trains the network to predict \textit{posteriori} probabilities \cite{richard1991neural}. Formally, given an network input $x$ and a class $c_i$, the network will predict $p(c_i|x)$. Since posteriors are inherently biased towards more frequent classes, we might want to estimate the likelihood $p(x|c_i)$ instead, depending on our use case. With bayes' theorem, we can write the posterior depending on the likelihood. 
