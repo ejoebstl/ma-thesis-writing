@@ -282,7 +282,6 @@ The master beam $mb$, and the coefficients $lz$ and $lp$ are hyper-parameters th
 Every machine learning needs to be tested on data it has not seen before. For this purpose, \textit{error metrics} are used. Error metrics provide a way to objectively measure the performance of a machine learning system. In the field of automated speech recognition, two dominant error metrics are used: \textit{Word error rate} (\textit{WER}) and \textit{frame error rate} (\textit{FER}).
 
 \subsubsection{Frame Error Rate}
-
 Frame error rate simply measures the classification error on frame level and is mostly used in connection with acoustic models. It can be calculated by counting how often the class of a frame was predicted incorrectly by the acoustic model. Given a sequence of classes predicted by our model $Y* = (y^*_1, ..., y^*_n)$ and a sequence of reference labels $Y = (y_1, ..., y_n)$, we can write the frame error rate as follows:
 
 \[
@@ -317,3 +316,9 @@ The word error rate $\operatorname{WER}(W^*, W)$ of two word sequences $W*$ and 
 \operatorname{WER}(W^*, W) = \frac{\operatorname{LD}(W^*,W)}{|W|}
 \]
 Here, $W$ is the \textit{reference hypothesis}, $W^*$ is the output for the system we seek to benchmark.
+\subsubsection{Sentence Error Rate}
+The \textit{sentence error rate} counts errors on an utterance level. As soon as a single word in a utterance is different as in the reference, the sentence is rated as incorrect. The sentence error rate is usually calculated over a corpus $V$ that contains many sentences $v_1,...,v_n$. It can be formally written as:
+\[
+\operatorname{SER}(V^*, V) = \frac{1}{n} \sum_{i = 0}^n 1|_{v^*_i = v_i} 
+\]
+Here, $V$ is the reference, $V*$ is the set of sentences predicted by our model. $1|_{v^*_i = v_i}$ is a indicator function that is one iff $v^*_i$ equals $v_i$.
