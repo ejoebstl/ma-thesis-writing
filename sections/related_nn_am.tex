@@ -14,8 +14,8 @@ Where $\delta_{ij}$ is the so called \textit{kronecker delta}.
 \]
 This formalization might seem unnecessary, but eases the transition from hidden markov model training to neural network training for certain training algorithms. In this case, our neural network is used to predict the likelihood $p(x|b_i)$ of a certain symbol $b_i$.\\
 We will now introduce two loss functions that are used in the field of automated speech recognition. We will also show how we can form gradients from the given loss functions. The gradients can be used to train neural networks according to the back-propagation algorithm described in section \ref{sec:gradient_descend}. Brief versions of this derivations can be found in \cite{ghoshal2013sequence}, detailed analysis of the loss functions can be found in \cite{gibson2008minimum} and \cite{povey2005discriminative}.
-\subsection{Maximum Likelihood}
-For maximum likelihood training, we use the viterbi algorithm to calculate the most likely state sequence. Then, each audio frame is labeled with its most likely state, according to the viterbi pass. We treat each state as a separate class and use this dataset for training a model using the negative log posterior as loss function \cite{kitasr2018stueker}. Formally, this loss function be written for an utterance as:
+\subsection{Maximum Likelihood Estimation}
+For maximum likelihood training, we use the viterbi algorithm to calculate the most likely state sequence. Then, each audio frame is labeled with its most likely state, according to the viterbi pass. We treat each state as a separate class and use this dataset for training a model using the negative log posterior as loss function \cite{kitasr2018stueker}. This optimizes the frame error rate. Formally, this loss function be written for an utterance as:
 \[
 \mathcal{L}_{\text{ML}} = - \sum_{t = 0}^{n} \log p^*_{s_t}
 \]
@@ -30,7 +30,7 @@ We now assume that the probability $p^*_{s_t}$ is produced by the output of a ne
 Where $\delta_{ij}$ is the kronecker delta. \\ \\
 After the neural network acoustic model was trained over the whole training set, labels can be re-written, and another neural network acoustic model can be trained with the new labels. This process can be iterated several times to improve results. 
 \subsection{Maximum Mutual Information Estimation}
-\textit{Maximum mutual information} (\textit{MMI}) estimation was introduced for estimating hidden markov model parameters in speech recognition systems in \ref{bahl1986maximum}. The training criterion given in \ref{bahl1986maximum} maximizes the ability of the model to discriminate between the correct distribution and any other distribution. Let $\mathcal{V}$ be the set of all utterances. In the context of speech recognition, we can give a loss function that maximizes mutual information between an observation sequence $O_U = (o_{U,1}, ..., o_{U,n})$ for a word sequence $U \in V$ as follows:
+\textit{Maximum mutual information} (\textit{MMI}) estimation was introduced for estimating hidden markov model parameters in speech recognition systems in \ref{bahl1986maximum}. The training criterion given in \ref{bahl1986maximum} maximizes the ability of the model to discriminate between the correct distribution and any other distribution. In other words, this training criterion minimizes the sentence error. Let $\mathcal{V}$ be the set of all utterances. In the context of speech recognition, we can give a loss function that maximizes mutual information between an observation sequence $O_U = (o_{U,1}, ..., o_{U,n})$ and a word sequence $U \in V$ as follows:
 \[
 \mathcal{L}_{\text{MMI}} = -\log\frac{p(O_U|U)P(U)}{\sum_{V \in \mathcal{V}} p(O_U|V)P(V)} 
 \]
@@ -47,23 +47,24 @@ With this expansion, we can simplify and express $\mathcal{L}_{\text{MMI}}$ in t
 \[
 \mathcal{L}_{\text{MMI}} = -\log\frac{\prod_{t = 0}^{n} p^*(s_{U,t}|o_{U,t})}{\sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*(s_{V,t}|o_{U,t})} 
 \]
-This expression can be derived by the posterior probability $p^*(s_{U,t}|o_{U,t})$ given by our neural network model to calculate a gradient for backpropagation. Again, let $p^*_{s_{j,t}}$ be $p^*(s_{j,t}|o_j)$.
+This expression can be differentiated with respect to the posterior probability $p^*(s_{U,t}|o_{U,t})$ to calculate a gradient for training a neural network model with backpropagation. Again, let $p^*_{s_{j,t}}$ be $p^*(s_{j,t}|o_j)$.
 \begin{align*}
 \frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \frac{\partial \log \sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\partial p^*_{s_{j,t}}} - \sum_{t = 0}^{n} \frac{\partial \log p^*_{s_{U,t}}}{\partial p^*_{s_{j,t}}} \\
-&= \frac{ \sum_{V \in \mathcal{M}} \delta_{(s_{V,t}),(s_{j,t})} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*_{s_{V,t}}} - \frac{1}{p^*_{s_{j,t}}}\\
-&= \frac{ \sum_{V \in \mathcal{M}} \delta_{(s_{V,t}),(s_{j,t})} }{|\mathcal{M}|} - \frac{1}{p^*_{s_{j,t}}}
+&= \frac{ \sum_{V \in \mathcal{M}} \delta_{(s_{V,t})(s_{j,t})} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*_{s_{V,t}}} - \frac{1}{p^*_{s_{j,t}}}
 \end{align*}
-If we generate the most likely state hypothesis for utterance $U$ with the viterbi algorithm, we can assume all $p^*_{s_{U,t}}$ to be equal to one. This second fraction becomes:
+Recall that $p^*_{s_{j,t}}$ is a shorthand for $p^*(s_{j,t}|o_j)$. We can now rewrite the first fraction in terms of probabilities, more precisely the probability of visiting state $s_{j,t}$ while we observe $O_U$. The fraction is indeed this probability: We divide the sum of probability of state sequences which visit $s_{j,t}$ by the sum of the probability of all sequences. We can use this to simplify the first fraction.
 \begin{align*}
-\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \frac{ \sum_{V \in \mathcal{M}} \delta_{(s_{V,t}),(s_{j,t})} }{|\mathcal{M}|} - \delta_{(s_{i,t}),(s_{U,t})}
-\end{align*}
-Recall that $p^*_{s_{j,t}}$ is a shorthand for $p^*(s_{j,t}|o_j)$. We can now rewrite the first fraction in terms of probabilities, more precisely the probability of visiting state $s_{j,t}$ while we observe $O_U$. The fraction is indeed this probability: We divide the count of state sequences which visit $s_{j,t}$ by the count of all sequences:
-\begin{align*}
-\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= p(x_t = s_{j,t}|O) - \delta_{(s_{i,t}),(s_{U,t})}
+\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= p(x_t = s_{j,t}|O) - p^*_{s_{j,t}}
 \end{align*}
 This formulation is familiar. It corresponds to the definition of $\gamma_t(j)$ from section \ref{sec:learning_hmm}, that is produced by the forward-backward algorithm when training hidden markov model parameters. We conclude this derivation by a compact formulation of the gradient for the MMI loss function:
 \begin{align}
 \label{eq:mmi_grad}
+\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \gamma_t(j) - p^*_{s_{j,t}}
+\end{align} 
+In literature, particularly \cite{ghoshal2013sequence}, a variant is sometimes used: 
+\begin{align}
+\label{eq:mmi_grad_simple}
 \frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \gamma_t(j) - \delta_{ij}
-\end{align}
-Where $i$ denotes the index of the correct state at time $t$, given by a viterbi pass. 
+\end{align} 
+Here $i$ denotes the index of the correct state at time $t$, given by a viterbi pass. This variant is motivated by the assumption that all $p^*_{s_{U,t}}$ for the correct sequence $S_U$ are equal to one. 
+
