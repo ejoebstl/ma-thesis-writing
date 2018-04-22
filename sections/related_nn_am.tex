@@ -70,34 +70,16 @@ In some literature, particularly \cite{ghoshal2013sequence}, a variant is used:
 
 \subsection{Overall Risk Criterion Estimation}
 
-The family of \textit{overall risk criterion estimation} (\textit{ORCE}) objective functions for hidden markov models was introduced in \cite{kaiser2000novel}. They are optimized to minimize the number of insertions, deletions and substitutions at either word, phone, or state level. The specific variants are called \textit{minimum word error} (\textit{MWE}) and \textit{minimum phone error} (\textit{MPE}) criterion for words and phones. For minimizing the error at state level, the criterion is called \textit{state minimum bayes risk} (\textit{sMBR}). Several pieces of literature suggest that the MPE and sMBR objective functions, if carefully tuned, perform better than MMI or maximum likelihood estimation in experiments \cite{povey2002minimum}\cite{gibson2008minimum}\cite{povey2005discriminative}\cite{peddinti2015jhu}. \\ \\
+The family of \textit{overall risk criterion estimation} (\textit{ORCE}), or \textit{minimum bayes risk} (\textit{MBR}) objective functions for hidden markov models was introduced in \cite{kaiser2000novel}. They are optimized to minimize the number of insertions, deletions and substitutions at either word, phone, or state level. The specific variants are called \textit{minimum word error} (\textit{MWE}) and \textit{minimum phone error} (\textit{MPE}) criterion for words and phones. For minimizing the error at state level, the criterion is called \textit{state minimum bayes risk} (\textit{sMBR}). Several pieces of literature suggest that the MPE and sMBR objective functions, if carefully tuned, perform better than MMI or maximum likelihood estimation in experiments \cite{povey2002minimum}\cite{gibson2008minimum}\cite{povey2005discriminative}\cite{peddinti2015jhu}. \\ \\
 We can formally define the whole family as loss function: 
 
 \[
 \mathcal{L}_{\text{OCRE}} = \frac{\sum_{V \in \mathcal{V}} P(O|V)P(V) \lambda(V,U)}{\sum_{V' \in \mathcal{V}} P(O|V')P(V')} 
 \]
 
-Where $\mathcal{V}$ is a set containing all possible hypothesis for an observation $O$, and $U$ is the reference hypothesis. $\lambda(V,U)$ would ideally be the levenshtein distance of $U$ and $V$, divided by the length of the correct hypothesis $U$. To our disadvantage, neither the word error rate nor the levensthein distance are continuous functions and can be differentiated. We therefore use a different error function that does not take substitutions into account:
-TODO: Is lambda really relevant?
-\[
-\lambda(V, U) = \frac{1}{|U|} \sum^{n}_{t' = 0} \delta_{(v_{t'})(u_{t'})}
-\]
-
-Here, $v_0,...,v_n$ are the $n$ labels of the hypothesis, where $u_0,...,u_n$ are the labels of the reference. The labels can either be given at word, phone or state level. This approach is originally given in \cite{povey2002minimum}. \\ \\
+Where $\mathcal{V}$ is a set containing all possible hypothesis for an observation $O$, and $U$ is the reference hypothesis. $\lambda(V,U)$, called the raw accuracy, would ideally be the levenshtein distance of $U$ and $V$, divided by the length of the correct hypothesis $U$. $\lambda(V,U)$ can either be measured on state level, phone level or on word level for sMBR, MPE and MWE, respectively. In practice, simpler metrics are often used, which do not rely on the computationally expensive calculation of the levensthein distance \cite{povey2002minimum}.\\ \\
 %We shall now differentiate the sMBR criterion with respect to the posterior probabilities $p^*(s_{j,t}|o_t)$ . 
-To derive a gradient for training a neural network, we explicitly formulate the criterion on state level. Also, we choose minimize the negative logarithm of the criterion, instead of maximizing the criterion itself: 
-\begin{align*}
-\mathcal{L}_{\text{OCRE}_\text{NN}} &= -\log \frac{\sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}} \\ 
-&= \log \sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}} -\log \sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}}  
-\end{align*}
-Like before, we can differentiate:
-\begin{align*}
-\frac{\partial\mathcal{L}_{\text{OCRE}_\text{NN}}}{\partial p^*_{s_{j,t}}} &= 
-\frac{ \sum_{V' \in \mathcal{V}} \delta_{(s_{V',t})(s_{j,t})} \prod_{t = 0}^{n} p^*_{s_{V',t}}}{\sum_{V' \in \mathcal{V}} \prod_{t = 0}^{n} p^*_{s_{V',t}}}\frac{1}{p^*_{s_{V',t}}} \\
-&- \frac{ \sum_{V \in \mathcal{V}}\lambda(U,V) \delta_{(s_{V,t})(s_{j,t})} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\sum_{V \in \mathcal{V}}\lambda(U,V) \prod_{t = 0}^{n} p^*_{s_{V,t}}}\frac{1}{p^*_{s_{V,t}}}
-\end{align*}
-
-OLD: Optimization without log: 
+To derive a gradient for training a neural network, we again formulate the criterion on state level:
 \[
 \mathcal{L}_{\text{OCRE}} = \frac{\sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}} 
 \]
@@ -107,8 +89,23 @@ Derivative of the P stuff:
 \frac{\partial \prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\partial p^*_{s_{j,t}}} &= \delta_{(s_{V,t})(s_{j,t})} \frac{1}{p^*_{s_{j,t}}} \prod_{t' = 0}^{n} p^*_{s_{V,t'}} \\
 \end{align*}
 \fi
-Now, we differentiate:
+Now, we differentiate, factor out the first fraction and cancel the last fraction:
 \begin{align*}
-\frac{\partial\mathcal{L}_{\text{sMBR}}}{\partial p^*_{s_{j,t}}} &= \frac{(\sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}})(\sum_{V' \in \mathcal{V}}\delta_{(s_{V',t})(s_{j,t})} \frac{1}{p^*_{s_{j,t}}} \prod_{t' = 0}^{n} p^*_{s_{V',t'}})}{(\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}})^2}  \\
-&- \frac{(\sum_{V \in \mathcal{V}}\lambda(U,V)\delta_{(s_{V,t})(s_{j,t})} \frac{1}{p^*_{s_{j,t}}} \prod_{t' = 0}^{n} p^*_{s_{V,t'}})(\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}})}{(\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}})^2} 
+\frac{\partial\mathcal{L}_{\text{OCRE}}}{\partial p^*_{s_{j,t}}} &= \frac{\sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}}
+\frac{\sum_{V' \in \mathcal{V}}\delta_{(s_{V',t})(s_{j,t})} \frac{1}{p^*_{s_{j,t}}} \prod_{t' = 0}^{n} p^*_{s_{V',t'}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}}  \\
+&- \frac{(\sum_{V \in \mathcal{V}}\lambda(U,V)\delta_{(s_{V,t})(s_{j,t})} \frac{1}{p^*_{s_{j,t}}} \prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}}
+\frac{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}} \\
+&= \frac{1}{p^*_{s_{j,t}}} \frac{\sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}} \left[
+\frac{\sum_{V' \in \mathcal{V}}\delta_{(s_{V',t})(s_{j,t})} \prod_{t' = 0}^{n} p^*_{s_{V',t'}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}} \right. \\
+&- \left. \frac{\sum_{V \in \mathcal{V}}\lambda(U,V)\delta_{(s_{V,t})(s_{j,t})} \prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}}} \right]
+% Take care, we use virtual dot delimeters here, to terminate the large braces. 
 \end{align*}
+We now use $\gamma_t(t)$ like before and introduce two new symbols to simplify the equation.
+\[
+\frac{\partial\mathcal{L}_{\text{OCRE}}}{\partial p^*_{s_{j,t}}} = \frac{1}{p^*_{s_{j,t}}} \gamma_t(j) \left[ \overline{\lambda}(U, V) - \overline{\lambda}(U, V|s_{j,t})) \right]
+\]
+$\overline{\lambda}(U, V)$ is the average raw accuracy for all sequences, weighted by the probability of each sequence. $\overline{\lambda}(U, V|s_{j,t})$ is the average raw accuracy for all sequences that pass through state $j$ at time $t$, also weighted by the probability of each sequence. \\ \\
+Again, in \cite{ghoshal2013sequence}, a variant of this gradient is defined: 
+\[
+\frac{\partial\mathcal{L}_{\text{OCRE}}}{\partial p^*_{s_{j,t}}} \approx \gamma_t(j) \left[ \overline{\lambda}(U, V) - \overline{\lambda}(U, V|s_{j,t})) \right]
+\]
