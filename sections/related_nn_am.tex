@@ -50,22 +50,65 @@ With this expansion, we can simplify and express $\mathcal{L}_{\text{MMI}}$ in t
 This expression can be differentiated with respect to the posterior probability $p^*(s_{U,t}|o_{t})$ to calculate a gradient for training a neural network model with backpropagation. Again, let $p^*_{s_{j,t}}$ be $p^*(s_{j,t}|o_j)$.
 \begin{align*}
 \frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \frac{\partial \log \sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\partial p^*_{s_{j,t}}} - \sum_{t = 0}^{n} \frac{\partial \log p^*_{s_{U,t}}}{\partial p^*_{s_{j,t}}} \\
-&= \frac{ \sum_{V \in \mathcal{M}} \delta_{(s_{V,t})(s_{j,t})} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*_{s_{V,t}}} - \frac{1}{p^*_{s_{j,t}}}
+&= \frac{ \sum_{V \in \mathcal{M}} \delta_{(s_{V,t})(s_{j,t})} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*_{s_{V,t}}}\frac{1}{p^*_{s_{V,t}}} - \frac{\delta_{(s_{U,t})(s_{j,t})}}{p^*_{s_{j,t}}}
 \end{align*}
-Recall that $p^*_{s_{j,t}}$ is a shorthand for $p^*(s_{j,t}|o_j)$. We can now rewrite the first fraction in terms of probabilities, more precisely the probability of visiting state $s_{j,t}$ while we observe $O$. The fraction is indeed this probability: We divide the sum of probability of state sequences which visit $s_{j,t}$ by the sum of the probability of all sequences. We can use this to simplify the first fraction.
+
+We can now rewrite the first fraction in terms of probabilities, more precisely the probability of visiting state $s_{j,t}$ while we observe $O$. The fraction is indeed this probability: We divide the sum of probability of state sequences which visit $s_{j,t}$ by the sum of the probability of all sequences. We can use this to simplify the first fraction.
 \begin{align*}
-\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= p(x_t = s_{j,t}|O) - \frac{1}{p^*_{s_{j,t}}}
+\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \frac{p(x_t = s_{j,t}|O)}{p^*_{s_{V,t}}} - \frac{\delta_{(s_{U,t})(s_{j,t})}}{p^*_{s_{j,t}}}
 \end{align*}
 This formulation is familiar. It corresponds to the definition of $\gamma_t(j)$ from section \ref{sec:learning_hmm}, that is produced by the forward-backward algorithm when training hidden markov model parameters. We conclude this derivation by a compact formulation of the gradient for the MMI loss function:
 \begin{align}
 \label{eq:mmi_grad}
-\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \gamma_t(j) - \frac{1}{p^*_{s_{j,t}}}
+\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &=  \frac{\gamma_t(j) -\delta_{(s_{U,t})(s_{j,t})}}{p^*_{s_{j,t}}}
 \end{align} 
-In literature, particularly \cite{ghoshal2013sequence}, a variant is sometimes used: 
+In some literature, particularly \cite{ghoshal2013sequence}, a variant is used: 
 \begin{align}
 \label{eq:mmi_grad_simple}
-\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \gamma_t(j) - \delta_{ij}
-\end{align} 
-Here $i$ denotes the index of the correct state at time $t$, given by a viterbi pass. This variant is motivated by the assumption that all $p^*_{s_{U,t}}$ for the correct sequence $S_U$ are equal to one. 
+\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &\approx \gamma_t(j) - \delta_{(s_{U,t})(s_{j,t})}
+\end{align}
 
-\subsection{State Minimum Bayes Risk}
+\subsection{Overall Risk Criterion Estimation}
+
+The family of \textit{overall risk criterion estimation} (\textit{ORCE}) objective functions for hidden markov models was introduced in \cite{kaiser2000novel}. They are optimized to minimize the number of insertions, deletions and substitutions at either word, phone, or state level. The specific variants are called \textit{minimum word error} (\textit{MWE}) and \textit{minimum phone error} (\textit{MPE}) criterion for words and phones. For minimizing the error at state level, the criterion is called \textit{state minimum bayes risk} (\textit{sMBR}). Several pieces of literature suggest that the MPE and sMBR objective functions, if carefully tuned, perform better than MMI or maximum likelihood estimation in experiments \cite{povey2002minimum}\cite{gibson2008minimum}\cite{povey2005discriminative}\cite{peddinti2015jhu}. \\ \\
+We can formally define the whole family as loss function: 
+
+\[
+\mathcal{L}_{\text{OCRE}} = \frac{\sum_{V \in \mathcal{V}} P(O|V)P(V) \lambda(V,U)}{\sum_{V' \in \mathcal{V}} P(O|V')P(V')} 
+\]
+
+Where $\mathcal{V}$ is a set containing all possible hypothesis for an observation $O$, and $U$ is the reference hypothesis. $\lambda(V,U)$ would ideally be the levenshtein distance of $U$ and $V$, divided by the length of the correct hypothesis $U$. To our disadvantage, neither the word error rate nor the levensthein distance are continuous functions and can be differentiated. We therefore use a different error function that does not take substitutions into account:
+TODO: Is lambda really relevant?
+\[
+\lambda(V, U) = \frac{1}{|U|} \sum^{n}_{t' = 0} \delta_{(v_{t'})(u_{t'})}
+\]
+
+Here, $v_0,...,v_n$ are the $n$ labels of the hypothesis, where $u_0,...,u_n$ are the labels of the reference. The labels can either be given at word, phone or state level. This approach is originally given in \cite{povey2002minimum}. \\ \\
+%We shall now differentiate the sMBR criterion with respect to the posterior probabilities $p^*(s_{j,t}|o_t)$ . 
+To derive a gradient for training a neural network, we explicitly formulate the criterion on state level. Also, we choose minimize the negative logarithm of the criterion, instead of maximizing the criterion itself: 
+\begin{align*}
+\mathcal{L}_{\text{OCRE}_\text{NN}} &= -\log \frac{\sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}} \\ 
+&= \log \sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}} -\log \sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}}  
+\end{align*}
+Like before, we can differentiate:
+\begin{align*}
+\frac{\partial\mathcal{L}_{\text{OCRE}_\text{NN}}}{\partial p^*_{s_{j,t}}} &= 
+\frac{ \sum_{V' \in \mathcal{V}} \delta_{(s_{V',t})(s_{j,t})} \prod_{t = 0}^{n} p^*_{s_{V',t}}}{\sum_{V' \in \mathcal{V}} \prod_{t = 0}^{n} p^*_{s_{V',t}}}\frac{1}{p^*_{s_{V',t}}} \\
+&- \frac{ \sum_{V \in \mathcal{V}}\lambda(U,V) \delta_{(s_{V,t})(s_{j,t})} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\sum_{V \in \mathcal{V}}\lambda(U,V) \prod_{t = 0}^{n} p^*_{s_{V,t}}}\frac{1}{p^*_{s_{V,t}}}
+\end{align*}
+
+OLD: Optimization without log: 
+\[
+\mathcal{L}_{\text{OCRE}} = \frac{\sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}}} 
+\]
+\iffalse
+Derivative of the P stuff: 
+\begin{align*}
+\frac{\partial \prod_{t' = 0}^{n} p^*_{s_{V,t'}}}{\partial p^*_{s_{j,t}}} &= \delta_{(s_{V,t})(s_{j,t})} \frac{1}{p^*_{s_{j,t}}} \prod_{t' = 0}^{n} p^*_{s_{V,t'}} \\
+\end{align*}
+\fi
+Now, we differentiate:
+\begin{align*}
+\frac{\partial\mathcal{L}_{\text{sMBR}}}{\partial p^*_{s_{j,t}}} &= \frac{(\sum_{V \in \mathcal{V}}\lambda(U,V)\prod_{t' = 0}^{n} p^*_{s_{V,t'}})(\sum_{V' \in \mathcal{V}}\delta_{(s_{V',t})(s_{j,t})} \frac{1}{p^*_{s_{j,t}}} \prod_{t' = 0}^{n} p^*_{s_{V',t'}})}{(\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}})^2}  \\
+&- \frac{(\sum_{V \in \mathcal{V}}\lambda(U,V)\delta_{(s_{V,t})(s_{j,t})} \frac{1}{p^*_{s_{j,t}}} \prod_{t' = 0}^{n} p^*_{s_{V,t'}})(\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}})}{(\sum_{V' \in \mathcal{V}} \prod_{t' = 0}^{n} p^*_{s_{V',t}})^2} 
+\end{align*}
