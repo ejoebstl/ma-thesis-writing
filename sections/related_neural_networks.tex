@@ -199,6 +199,7 @@ D_{KL}(p, q) &= - \sum_{x} p(x) \left[ \log p(x) - \log q(x) \right] \\
 
 Since we are not interested minimizing the distribution $p$, we can drop the first sum, and thus receive the cross entropy loss as in equation \ref{eq:cross_entropy_loss}. 
 \subsection{Cross Entropy Loss for Classification}
+\label{sec:ce_loss}
 When training neural networks, we often deal with classification problems. In this case, we seek to assign a single class to a given input sample, our target probability $p$ has exactly one element which is one, all other elements are zero. In this case, the cross entropy loss can be simplified to the so called \textit{negative log likelihood loss}, where $i$ is the index of the correct class in $p$. 
 
 \begin{align}

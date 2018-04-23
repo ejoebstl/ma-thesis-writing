@@ -172,10 +172,10 @@ W^* &= \underset{W}{\arg \max} \; P(X|W) P(W) \\
 \end{align*}
 Here, $X = (o_1, ..., o_n)$ is an observation sequence, and $W = (w_1, ..., w_n)$ is a word sequence. \\ \\ 
 We can also interpret the combination of the acoustic model, language model and dictionary as one large hidden markov model. With this interpretation, we can find the optimal solution $W^*$ with a search through the hidden markov model. We can do so by using a greedy breath-first search with a heuristic, that picks the next state to visit. Such a search algorithm is also called \textit{A* algorithm} in literature \cite{hart1968formal}. However, this approach is not tractable in practice, as the model becomes very large. Therefore, a so-called \textit{beam search} is used. A beam search simply discards paths with a probability that fall below a certain threshold, which we call $mb$. \\ \\
-For a real-world implementation we consider three more details. First, we want to avoid multiplications, because they are computationally expensive. We therefore maximize the negative log-likelihood instead of raw probabilities. Second, we add the scaling factor $lz$ to weight the acoustic model versus the language model, which was shown to be very useful in practice. Also we add another parameter $lp$ which can be used to penalize too short or too long word sequences. 
+For a real-world implementation we consider three more details. First, we want to avoid multiplications, because they are computationally expensive. We therefore maximize the negative log-likelihood instead of raw probabilities. Second, we add the scaling factor $l_z$ to weight the acoustic model versus the language model, which was shown to be very useful in practice. Also we add another parameter $l_p$ which can be used to penalize too short or too long word sequences. 
 \begin{align*}
 W^* &= \underset{W}{\arg \max} \; -\log\left(P(X|W) P(W)^{lz} |W|^{lp} \right) \\
-&= \underset{W}{\arg \max} \; -\log P(X|W) - lz\log P(W) -lp\log(|W|) 
+&= \underset{W}{\arg \max} \; -\log P(X|W) - l_z\log P(W) -l_p\log(|W|) 
 \end{align*}
 
 The master beam $mb$, and the coefficients $lz$ and $lp$ are hyper-parameters that have to be tuned for optimal results. 

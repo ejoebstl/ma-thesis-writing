@@ -10,16 +10,16 @@
 %%
 %% Version 1.3.2, 2017-08-01
 
-
-
 \chapter{Design of a TDNN acoustic model}
-To find a good design for a TDNN acoustics model, we had to make several design decisions. Most of the design decisions were justified by experiments, while some were taken from related work. This chapter summarizes the decisions made and the corresponding results. In some cases, we will also provide a comparison with a fully-connected network, which served as our experiment baseline. It should be noted that the experiments described in \cite{peddinti2015jhu} and \cite{peddinti2015reverberation} provided the main inspiration for this work, therefore we based some of our parameters on their result. 
-
-\subsection{Neural Network Parameters}
-This section focuses on parameters that are related to the neural network design. 
-\subsubsection{Input Context and Features}
-The input context of all our TDNN models is ${-13,9}$, which means the TDNN sees the current frame, thirteen frames in the past, and nine frames in the future. This parameter was taken from the smallest TDNN model described in \cite{peddinti2015reverberation}. 
-\subsubsection{Count and Width of Layers}
+To find a good design for a TDNN acoustics model, we had to make several design decisions. Most of the design decisions were justified by experiments, while some were taken from related work. This chapter summarizes the decisions made and the corresponding results. In some cases, we will also provide a comparison with a fully-connected network, which served as our experiment baseline. It should be noted that the experiments described in \cite{peddinti2015jhu} and \cite{peddinti2015reverberation} provided the main inspiration for this work, therefore we based some of our parameters on their result. \\ 
+\section{Training Data and System Setup}
+TODO, describe the simplified version of the speech recognition system described in \cite{nguyen20162016} was used.
+TODO, describe the dataset. 
+\section{Neural Network Parameters}
+This section focuses on parameters that are related to the neural network design. For all models in this section, the word error rate was estimated by using $l_p$ and $l_z$ that were tuned for each model separately. The priors were estimated by counting labels over the whole training set.
+\subsection{Input Context}
+The time input context of all our TDNN models is ${-13,9}$, which means the TDNN sees the current frame, thirteen frames in the past, and nine frames in the future. This parameter was taken from the smallest TDNN model described in \cite{peddinti2015reverberation}. 
+\subsection{Count and Width of Layers}
 The count of layers and width of each layer is one of the most important design parameters for neural networks. As in \cite{peddinti2015reverberation}, all our models use the same amount of channels for each TDNN unit. Only the count of observed time frames changes with each layer. \\ \\
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
@@ -44,7 +44,7 @@ The count of layers and width of each layer is one of the most important design 
 	\captionof{figure}{Word Error Rate for different choices of layer and channel count}
 	\label{fig:tdnn_layer_design}
 \end{minipage}
-Figure \ref{fig:tdnn_layer_design} shows the word error rate for different configurations. The word error rate was estimated by using the same decoding parameters $l_p$ and $l_z$ for each architecture and the priors were estimated from the training data. Table \ref{tbl:tdnn_layer_design} gives the kernel size and stride over time for each layer in each architecture. \\ \\
+Figure \ref{fig:tdnn_layer_design} shows the word error rate for different configurations. Table \ref{tbl:tdnn_layer_design} gives the kernel size and stride over time for each layer in each architecture. \\ \\
 \begin{minipage}{\linewidth}
 	\centering 
 	\begin{tabular} {|l | c | c | c | c | c | c | c | c | c | c | c | c |}
@@ -61,43 +61,208 @@ Figure \ref{fig:tdnn_layer_design} shows the word error rate for different confi
 	\captionof{figure}{Splice and stride parameters for the two different architectures}
 	\label{tbl:tdnn_layer_design}
 \end{minipage}
-For this set of experiments, each TDNN layer was followed by a LP-pooling nonlinearity with P of two and group size ten, as well as a batch normalization layer. 
-\subsubsection{Nonlinearity}
-Following\cite{zhang2014improving}, we use a LP-pooling nonlinearity with a P of two and a group size if ten after each TDNN layer. Using the LP norm can be problematic, as the gradient can become infinity when all inputs in the pooling group are zero. The authors of \cite{peddinti2015reverberation} propose to use a normalization layer after each LP-pooling layer, which solves the problem. We propose an alternate approach, which is setting the gradient to zero if all inputs become zero. Furthermore, we also tested max pooling as a possible nonlinearity. All experiments were conducted on the 4-Layer architecture described before. Figure \ref{fig:tdnn_nonlinearity} shows the results. 
+For this set of experiments, each TDNN layer was followed by a LP-pooling nonlinearity with P of two and group size ten, as well as a batch normalization layer.
+\subsection{Nonlinearity}
+Following\cite{zhang2014improving}, we use a LP-pooling nonlinearity with a P of two and a group size if ten after each TDNN layer. Using the LP norm can be problematic, as the gradient can become infinity when all inputs in the pooling group are zero. The authors of \cite{peddinti2015reverberation} propose to use a normalization layer after each LP-pooling layer, which solves the problem. We propose an alternate approach, which is setting the gradient to zero if all inputs become zero. Furthermore, we also tested max pooling as a possible nonlinearity. All experiments were conducted on the 4-Layer architecture described before. Figure \ref{fig:tdnn_nonlinearity} shows the results. \\ \\
 \begin{minipage}{\linewidth}
+	\centering
 	\begin{tikzpicture}
 		\begin{axis}[
-			   ybar,
-			enlargelimits=0.15,
-			legend style={at={(0.5,-0.2)},
-				anchor=north,legend columns=-1},
-			ylabel={\#participants},
-			symbolic x coords={LP Batch Norm,MaxPool,LP Gradient Modification}
-			%symbolic x coords={LP Batch Norm,MaxPool,LP Gradient Modificatoin},
-			xtick=data,
-			nodes near coords
+		xbar,xmajorgrids=true,
+		width=0.8\linewidth,height=4.5cm, enlarge y limits=0.5,
+		xmin=15,xlabel={Word Error Rate},
+		symbolic y coords={LP/BatchNorm,MaxPool,LP/GradZero},
+		ytick=data,nodes near coords, nodes near coords align={horizontal},
 		]
-		
-		% TODO: Fix this plot...
-		\addplot coordinates {(LP Batch Norm,16.6) (MaxPool,15.8) 
-			(LP Gradient Modification,15.5)};
-	%	\addplot coordinates {1,16.6) (2,15.8) (3, 15.5)};
-		%\addplot coordinates {(1,15.8)};
-		%\addplot coordinates {(1,15.5)};
-		
-		%\legend{LP + Batch Norm, MaxPool, LP + Gradient Modification}
+		%1009, I24, I12
+		% All with only l[/lz/mb tuning, no custom priors and no softmax
+		\addplot coordinates {(15.5,LP/GradZero) (15.8,MaxPool) 
+		(16.6,LP/BatchNorm)};
 		\end{axis}
 	\end{tikzpicture}
 	\captionof{figure}{Word Error Rate for different choices of nonlinearities}
 	\label{fig:tdnn_nonlinearity}
-\end{minipage}
+\end{minipage} \\ \\
 In our case, the usage of LP tuning with a modified gradient outperformed the other nonlinearities.  
-\subsection{Training Parameters}
+\section{Training Parameters}
+This section is focused on the training setup for our acoustic model. Out setup is closely related to the setup described in \cite{nguyen20162016}. We also build upon the same dataset which is described in detail in chapter \ref{} TODO link eval. 
+\subsection{Shuffling of Dataset}
+For our experiments, we benchmarked different shuffling strategies. Shuffling of the whole dataset once before training, and shuffling of the whole dataset before each epoch. The results can be seen in figure \ref{}.
+TODO TODO TODO, re-train two feed-forward models with 32b full shuffling and 16b full shuffling \\ \\
+\begin{minipage}{\linewidth}
+	\centering
+	\begin{tikzpicture}
+	\begin{axis}[
+	xbar,xmajorgrids=true,
+	width=0.8\linewidth,height=4.5cm, enlarge y limits=0.5,
+	xmin=15,xlabel={Word Error Rate},
+	symbolic y coords={LP/BatchNorm,MaxPool,LP/GradZero},
+	ytick=data,nodes near coords, nodes near coords align={horizontal},
+	]
+	% TODO TODO TODO 
+	% All with only l[/lz/mb tuning, no custom priors and no softmax
+	\addplot coordinates {(15.5,LP/GradZero) (15.8,MaxPool) 
+		(16.6,LP/BatchNorm)};
+	\end{axis}
+	\end{tikzpicture}
+	\captionof{figure}{Word Error Rate for different shuffling strategy}
+	\label{fig:tdnn_shuffling}
+\end{minipage} \\ \\
+\subsection{Learning Rate and Learning Rate Decay}
+As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for training for stochastic gradient descend, with an initial learning rate of $0.08$ and a momentum of $5$. Figure \ref{fig:newbob_wer} show the word error rate per epoch when using newbob. The model used for generating this plot was a small TDNN with only three layers we used for testing our implementation. \\ \\
+TODO: New graphic for I12 is currently being generated. \\ \\
+\begin{minipage}{\linewidth}
+	\begin{tikzpicture}
+	\begin{axis}[ylabel=Word Error Rate, xlabel=Channels, height=6cm, 
+	xticklabel style={name=T\ticknum},grid=major]
+	%C128, TODO: Redo with I12
+	\addplot coordinates {
+		(1,22.2)
+		(2,21.6)
+		(3,21.3)
+		(4,21.1)
+		(5,21.1)
+		(6,21.0)
+		(7,20.9)
+		(8,21.1)		
+		(9,21.3)
+		(10,21.3)
+		(11,21.2)
+		(12,21.2)
+		(13,21.2)
+		(14,21.1)
+		(15,21.1)
+		(16,20.9)
+		(17,20.8)
+		(18,20.8)
+	};
+\addlegendentry{4 Layer};
+	\end{axis}
+	\end{tikzpicture}
+	\captionof{figure}{Word Error Rate per Epoch when using newbob training. The exponential decaying of the learning rate started with epoch eight.}
+	\label{fig:newbob_wer}
+\end{minipage}
+\\ \\
+Figure \ref{fig:newbob_fer} shows the frame error rate for each epoch when training with newbob. It can be seen that exponential decay reduces the frame error rate significantly. \\ \\
+\begin{minipage}{\linewidth}
+	\begin{tikzpicture}
+	\begin{axis}[ylabel=Frame Error Rate, xlabel=Channels, height=6cm, 
+	xticklabel style={name=T\ticknum},grid=major]
+	%I12
+	\addplot coordinates {
+		(1,57.54)
+		(2,50.93)
+		(3,49.71)
+		(4,49.11)
+		(5,45.57)
+		(6,43.50)
+		(7,42.30)
+		(8,41.62)		
+		(9,41.25)
+		(10,41.06)
+		(11,40.69)
+		(12,40.91)
+		(13,40.88)
+		(14,40.87)
+	};
+	\addlegendentry{Train};
+	\addplot coordinates {
+		(1,52.61)
+		(2,50.48)
+		(3,49.70)
+		(4,49.68)
+		(5,46.57)
+		(6,44.79)
+		(7,43.89)
+		(8,43.37)		
+		(9,43.11)
+		(10,42.99)
+		(11,42.91)
+		(12,42.89)
+		(13,42.87)
+		(14,42.87)
+	};
+	\addlegendentry{Test};
+	\end{axis}
+	\end{tikzpicture}
+	\captionof{figure}{Frame Error Rate per Epoch when using newbob training. The exponential decaying of the learning rate started with epoch five.}
+	\label{fig:newbob_fer}
+\end{minipage}
+\section{Decoding Parameters}
+Tuning decoding parameters is important for good achieving a high accuracy on word level. The decoding parameters are not directly related to the acoustic model, but rather the decoding process. Different acoustic models might still require different decoding parameters for best performance. 
+\subsection{Acoustic Model Scaling and Length Penalty}
+Our experiments have shown that the $l_p$ and $l_z$ parameters are correlated. Therefore we have optimize them using a grid search over a reasonable parameter space. \\ \\
+\begin{minipage}{\linewidth}
+\begin{minipage}{0.5\linewidth}
+\begin{tikzpicture}
+\begin{axis}[grid=both,zlabel=Word Error Rate,xlabel=$l_z$,ylabel=$l_p$]
+	\addplot3[surf,mesh/cols=6,z buffer=sort] file {data/lp_lz_996};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\hfill
+\begin{minipage}{0.5\linewidth}
+\begin{tikzpicture}
+\begin{axis}[grid=both,xlabel=$l_z$,ylabel=$l_p$]
+\addplot3[surf,mesh/cols=5,z buffer=sort] file {data/lp_lz_128};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\captionof{figure}{Example of the word error rate for different $L_p$ and $L_z$ parameters for a four-layer TDNN (left) and a three-layer TDNN (right)}
+\label{fig:lp_lz}
+\end{minipage}
+\\ \\
+An example impact of the $L_p$ and $L_z$ for two different models are illustrated in figure \ref{fig:lp_lz}. Our experiments have shown that the optimal parameters are similar for each of the models we tested. It is still advisable to fine tune the parameters for each model. Taking the initial values for the grid search from an similar model usually leads good result.
+\subsection{Master Beam}
+We did tested several architectures with different master beams. Master beams between four and six appeared to work best, but we did not find any pattern that correlated with the network architecture. This indicates that the optimal master beam depends on several factors, not just on the architecture of the neural network model itself. 
+\subsection{Neural Network Priors}
+As described in section \ref{sec:ce_loss}, it is important to scale the posteriors generated by the neural network with priors. We tested two different approaches of generating the priors: Generating them from the complete test dataset and also generating them from the output of a trained model. In the second case, thirty minutes of speech data randomly from our dataset, computed the neural network output on it, and counted the occurrence of each label. \\ \\
+\begin{minipage}{\linewidth}
+	\centering
+	\begin{tikzpicture}
+	\begin{axis}[
+	xbar,xmajorgrids=true,
+	width=0.8\linewidth,height=3.5cm, enlarge y limits=0.5,
+	xmin=14,xlabel={Word Error Rate},
+	symbolic y coords={Dataset,Output},
+	ytick=data,nodes near coords, nodes near coords align={horizontal},
+	]
+	\addplot coordinates {(15.4,Dataset) (15.1,Output)};
+	\end{axis}
+	\end{tikzpicture}
+	\captionof{figure}{Word Error Rate for priors estimated from the dataset and the model output}
+	\label{fig:wer_priors}
+\end{minipage} 
+\\
+As illustrated in figure \ref{fig:wer_prior}, calculating the priors from the the output of the model decreased the word error rate significantly. 
+\subsection{Softmax Smoothing}
+We also tested the impact of softmax smoothing on the neural network output. The motivation is that a search through a beam search through a hidden markov model does not work very well when the acoustic model is overconfident regarding certain states. \\ \\
+\begin{minipage}{\linewidth}
+	\begin{tikzpicture}
+	\begin{axis}[ylabel=Frame Error Rate, xlabel=Channels, height=6cm, 
+	xticklabel style={name=T\ticknum},grid=major]
+	%I12
+	\addplot coordinates {
+		(0.8,15)
+		(0.85,15)
+		(0.88,15)
+		(0.9,14.9)
+		(0.92,15)
+		(0.95,15.1)
+		(1,15.1)
+		(1.1,15.4)
+		(1.2,15.8)
+	};
+	\end{axis}
+	\end{tikzpicture}
+	\captionof{figure}{Word Error Rate per softmax adjustment $1/\tau$ for a four-layer TDNN model}
+	\label{fig:softmax_fer}
+	
+	TODO: If it makes a difference, show a augmented model here. 
+\end{minipage} \\ \\
 
-\subsection{Decoding Parameters}
 
-
-
+\iffalse
 \label{ch:approach}
 This chapter describes our approach for acoustic modelling using TDNNs on a high level. 
 We will also give a brief overview over unknown hyperparemters and design decisions,
@@ -112,3 +277,4 @@ This chapter should describe the detailed preleminaries and hyperparemters of ou
     \item which learning rate schedulers, optimizers, loss functions were used
     \item which mechanisms were used to make the training faster and scalable
 \end{itemize}
+\fi
