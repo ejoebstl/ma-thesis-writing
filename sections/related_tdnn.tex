@@ -1,5 +1,6 @@
 
 \section{Time Delay Neural Networks}
+\label{sec:tdnn}
 
 \textit{Time delay neural networks} were introduced by Waibel et. al in \cite{waibel1990phoneme}. The purpose time delay neural networks is to model long time dependencies in a robust way. The central idea behind this network type is to use several time frames of input, and to not use fully-connected layers, but rather layers that impose temporal structure. \\ \\
 To achieve this, the network not only receives the current frame $x_{0,t}$ as input, but also the $n$ previous frames $x_{0,t - 1}, ..., x_{0,t - n}$ as input. These frames are delayed in time, hence the name. Then, the a weighted sum is applied to the input, where the weights are learned parameters. This is called a \textit{TDNN unit} or \textit{TDNN layer} with a filter kernel of size $n$. TDNN layers can be stacked. If this is the case, preceding layers have to be extended to produce an output that contains multiple time frames. \\

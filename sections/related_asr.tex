@@ -2,8 +2,8 @@
 \section{Automated Speech Recognition}
 \label{ch:HMM_ASR}
 \textit{Automated speech recognition} (\textit{ASR}) is the task of generating a text transcription from a given sample of spoken language using a computer system. In literature, this problem is also referred to as \textit{speech to text} (\textit{SST}). \\
-Many approaches exist for solving this task. In this work, we will focus on automated speech recognition using systems that are based on hidden markov models for modeling language. The contents of this this section, except otherwise noted, is based upon the lecture Automated Speech Recognition of Karlsruhe Institute of Technology \cite{kitasr2018stueker}, which is in turn based on the books \cite{schukat1995automatische} and \cite{huang2001spoken}. \\ \\
-Automated speech recognition systems built on hidden markov models usually follows an architecture that separates \textit{preprocessing} of the audio signal and \textit{decoding}. The preprocessing transforms a brief time window of the audio signal into a feature vector. The decoding uses a statistical model assembled from an \textit{acoustic model}, a \textit{dictionary} and a \textit{language model} to calculate the most likely text representation, given the feature vectors.\\ \\
+Many approaches exist for solving this task. In this work, we will focus on automated speech recognition using systems that are based on hidden markov models. The contents of this this section, except otherwise noted, is based upon the lecture Automated Speech Recognition of Karlsruhe Institute of Technology \cite{kitasr2018stueker}, which is in turn based on the books \cite{schukat1995automatische} and \cite{huang2001spoken}. \\ \\
+Automated speech recognition systems usually follows an architecture that separates \textit{preprocessing} of the audio signal and \textit{decoding}. The preprocessing transforms a brief time window of the audio signal into a feature vector. The decoding uses a statistical model assembled from an \textit{acoustic model}, a \textit{dictionary} and a \textit{language model} to calculate the most likely text representation, given the feature vectors.\\ \\
 
 More formally, we can treat the decoding as a classification problem. Let $a$ be a set of feature vectors, we seek to find the word sequence $w^*$ that was most likely for $a$ under our model. That can formally be written as follows, where $p(w|a)$ is the conditional probability of event $w$ given $a$:
 
@@ -23,14 +23,14 @@ w^* = \underset{w}{\arg \max} \; P(a|w) P(w)
 \label{eq:asr_base_formula}
 \end{align}
 
-Equation \ref{eq:asr_base_formula} is called the \textit{fundamental equation of automated speech recognition}. While the fundamental equation seems straight forward, the difficult task is to create a reliable and computationally tractable model for approximating the probability of an acoustic feature given a word sequence, $p(a|w)$ and the probability of observing a word sequence $p(w)$. For this task, \textit{hidden markov models} built from the acoustic model, language model and dictionary are used. We will first describe the preprocessing, then briefly introduce hidden markov models, then introduce the three components and then show how they are combined into a single model, which is then used by the decoder. 
+Equation \ref{eq:asr_base_formula} is called the \textit{fundamental equation of automated speech recognition}. While the fundamental equation seems straight forward, the difficult task is to create a reliable and computationally tractable model for approximating the probability of an acoustic feature given a word sequence, $p(a|w)$ and the probability of observing a word sequence $p(w)$. Finding $p(a|w)$ is the purpose of the acoustic model. The language model is responsible for finding $p(w)$. 
 
 \subsection{Preprocessing}
-Preprocessing transforms some audio signal into a sequence of feature vectors. To do so, we sample an audio signal using a microphone, then the signal is windowed and the spectrum is calculated for each window of the signal. This process is called short time fourier transform, as defined in the introduction in equation \ref{eq:stft}. Hence, the resulting spectral coefficients are also often called \textit{fourier coefficients}. It should be noted that there are more sophisticated approaches, notably the \textit{continous wavelet transform}, as described in \cite{mallat1999wavelet}, which has better properties in terms of time and frequency resolution. \\ \\
+Preprocessing, also called the \textit{frontend}, transforms some audio signal into a sequence of feature vectors. To do so, we sample an audio signal using a microphone, then the signal is windowed and the frequency spectrum is calculated for each window of the signal. This process is called short time fourier transform, as defined in section \ref{sec:reverberation}, equation \ref{eq:stft}. Hence, the resulting spectral coefficients are also often called \textit{fourier coefficients}. It should be noted that there are more sophisticated approaches to extract the frequency components of a windowed signal, notably the \textit{continous wavelet transform}, as described in \cite{mallat1999wavelet}, which has better properties in terms of time and frequency resolution. \\ \\
 There exist numerous approaches to transform the spectrum of a signal to useful features. In this work, we only discuss so called \textit{log-mel coefficients}. 
 \subsubsection{Log-Mel Coefficients}
 \label{sec:lmel}
-Log-mel coefficients were introduced in \cite{waibel1990phoneme} and \cite{waibel1983comparative}. This approach is physiologically motivated. To be specific, the mel-scale provides a better relative frequency resolution in lower frequencies. \\
+Log-mel coefficients were introduced in \cite{waibel1990phoneme} and \cite{waibel1983comparative}. This approach is physiologically motivated: Similar to human hearing, the mel-scale provides a better relative frequency resolution in lower frequencies \cite{waibel1990phoneme}. \\
 As given in \cite{poser1990speech}, the mel-scale is defined by the following relation to the regular frequency spectrum in Hertz: 
 \[
 MEL(f)=2595\log _{10}\left(1+{\frac {f}{700}}\right)
@@ -40,14 +40,14 @@ Very often, the number of coefficients is reduced to get smaller feature vectors
 MEL_k = \int \sigma_k(f) * MEL(f) \delta f 
 \]
 
-In practice, a triangle window is often used. In literature, the weighted sum is also referred to as \textit{filter bank} \cite{zhan1997vocal}. \\
+Usually a triangle window is used. In literature, the weighted sum is also referred to as \textit{filter bank} \cite{zhan1997vocal}. \\
 The $k$-th log-mel coefficient is then calculated by applying a logarithm:
 \[
 lMEL_k = \log(MEL_k) 
 \]
 A graphical example of log-mel coefficients can be seen in figure \ref{fig:tiny_input_signal}.
 \\ \\
-In literature, \textit{Mel-Frequency-Cepstral-Coefficients} (\textit{MFCCs}) are often mentioned. They are not to be confused with log-mel coefficients. MFCCs can be calculated by applying an inverse discrete cosine transform on the the log-mel coefficients.
+In literature, \textit{Mel-Frequency-Cepstral-Coefficients} (\textit{MFCCs}) are frequently mentioned. They are not to be confused with log-mel coefficients. MFCCs can be calculated by applying an inverse discrete cosine transform on the the log-mel coefficients \cite{davis1990comparison}.
 
 % Our experiments use VTLN with a warp factor of 1.0. According to the janus implementation, that does not do anything. 
 %\subsubsection{Vocal Tract Length Normalization}
@@ -56,15 +56,15 @@ In literature, \textit{Mel-Frequency-Cepstral-Coefficients} (\textit{MFCCs}) are
 
 \subsection{Acoustic Model}
 \label{sec:acoustic_model}
-TODO: Rewrite with acoustic score on word level. 
-Before we explain the purpose of the acoustic model, we have to introduce the linguistic concepts of \textit{phonemes}, \textit{phones} and \textit{allophones}. Phonemes are sound atoms in a spoken language, that are relevant for the meaning of a spoken word. In other words, if a phoneme in a spoken word changes, the meaning of this word would change. Allophones are different pronunciation version of the same phoneme. \textit{Phones} are simply distinct sounds that are found in a language, regardless of whether swapping a phone changes the meaning of the word or not. \\ \\
-The acoustic model $A$ is responsible of giving us the probability of observing a certain feature $o$, for a given phone $\wp$. 
+The acoustic model $A$ is responsible of giving us the likelihood of observing a certain word sequence $W$, for a given sequence of features $a$. 
 \[
-	A_\wp(o) = p(o|\wp)
+	A_W(o) = P(a|w)
 \]
-Traditional acoustic models use classification schemes on feature vectors from the preprocessing. The most prominent technique here are gaussian mixture models, which combine several normal distributions to approximate a more complex distribution. The parameters of the acoustic model are usually learned using the Baum-Welch equations introduced in the previous section. \\ \\
-Acoustic models might be extended to classifying allophones, or even include context dependencies on neighboring phones. Antother approach would be to model the start, middle, and end part of an phone as three distinct hidden markov model states, which represent the phone together. This has the advantage of introducing some speed invariance into the model: It does no longer matter whether a certain phoneme was spoken very slowly or fast. Figure \ref{fig:sub_three_allophone} shows a hidden markov model for such an approach. 
-
+Since language does not have one fixed speed, but can rather be slow or fast, acoustic models usually make use of hidden markov models combined with some discriminative classification approach. The discriminative classifier is responsible for predicting the observation probability for a certain symbol of the hidden markov model. The most prominent classifier for this specific task is the gaussian mixture models, which combines several normal distributions to approximate a more complex distribution. The parameters of the acoustic model are usually learned using the Baum-Welch equations introduced in the previous section. \\ \\
+Before we explain the architecture of the hidden markov model model used for the acoustic model, we have to introduce the linguistic concepts of \textit{phonemes}, \textit{phones} and \textit{allophones}. Phonemes are sound atoms in a spoken language, that are relevant for the meaning of a spoken word. In other words, if a phoneme in a spoken word changes, the meaning of this word would change. Allophones are different pronunciation version of the same phoneme. \textit{Phones} are simply distinct sounds that are found in a language, regardless of whether swapping a phone changes the meaning of the word or not. \\ \\
+In the case relevant for this work, the acoustic model models so called context dependent sub-phones, which are then combined into words or word sequences using the dictionary. Sometimes, allophones are modeled as well, to capture variants. For simplicity we will also refer to allophones as phones. \\
+Context dependent phones include predecessor and successor phones into their model. This happens by introducing extra hidden HMM states for $n$-tupels of phones. These context-dependent phones are then called \textit{diphones}, \textit{triphones} or \textit{quinphones}. This approach leads to a very high number of HMM quickly, so context-dependent phones have to be chosen carefully. \\
+For modeling so-called sub-phones, the model distinguishes between start, middle, and end part of an phone as three distinct hidden markov model states, which represent the phone together. This has the advantage of introducing some speed invariance into the model: It does no longer matter whether a certain phone was spoken very slowly or fast. Figure \ref{fig:sub_three_allophone} shows a hidden markov model for such an approach. \\
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
 		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
@@ -87,11 +87,11 @@ Acoustic models might be extended to classifying allophones, or even include con
 		
 		\end{tikzpicture}
 	}
-	\captionof{figure}{Hidden markov model for an allophone model with three sub-states for start $a_s$, middle $a_m$ and end $a_e$}
+	\captionof{figure}{Hidden markov model for a phone model with three sub-states for start $a_s$, middle $a_m$ and end $a_e$}
 	\label{fig:sub_three_allophone}
 	\hspace{1cm}
 \end{minipage}
-
+A single HMM state in such a model is also referred to as \textit{distribution} or \textit{senone} for historical reasons \cite{yu2016automatic}.
 \subsection{Dictionary}
 \label{sec:dictionary}
 The purpose of the dictionary is to describe the pronunciation of words in terms of phones. The dictionary is usually given. A common way to create a dictionary is to generate it using a set of rules and a list of words, and then fine-tune it by hand. The dictionary also contains different pronunciation variants for each word. 
@@ -126,18 +126,17 @@ The purpose of the dictionary is to describe the pronunciation of words in terms
 	\label{fig:dictionary_hmm}
 	\hspace{1cm}
 \end{minipage}
-Figure \ref{fig:dictionary_hmm} shows such a model for a single word. Emissions are not shown, as each state in this model refers the hidden markov model associated with the corresponding phoneme. Transitions that are not modeled in the dictionary are constant zero. 
+Figure \ref{fig:dictionary_hmm} shows such a model for a single word. Emissions are not shown, as each state in this model refers the hidden markov model associated with the corresponding phoneme. Transitions that are not modeled in the dictionary are constant zero, also the dictionary contains no trainable parameters.
  
 \subsection{Language Model}
 \label{sec:language_model}
-The language model models the probability of word sequences, or in other terms, the probability of a word following a certain other world. Since languages tend to have many words, calculating the transmission probability for each given word pair would be intractable. Instead of this, so called $n$-gram language models are used. $n$-gram language models count the occurrence of word tuples of length $n$ in a large text corpora. The occurrences are then used to calculate the probability of a word $w_1$, given $n - 1$ predecessors $w_2, ..., w_n$.
+The language model models the probability of word sequences, or in other terms, the probability of a word following a certain other world. Since languages tend to have many words, calculating the transmission probability for each given word pair would be intractable. Instead of this, so called $n$-gram language models can be used. $n$-gram language models count the occurrence of word tuples of length $n$ in a large text corpora. The occurrences are then used to calculate the probability of a word $w_1$, given $n - 1$ predecessors $w_2, ..., w_n$.
 
 \[
 L(w_1) = P(w_1|w_2,...,w_n)
 \]
 
-For a $2$-gram model, the transition probabilities can be directly derived by norming the count of occurrences for each successor. An example for such a model is shown in figure \ref{fig:lm_hmm}. For larger $n$, we have to have a state for each feasible combination of words, which quickly becomes intractable. 
-
+For a $2$-gram model, the transition probabilities can be directly derived by norming the count of occurrences for each successor. An example for such a model is shown in figure \ref{fig:lm_hmm}. For larger $n$, we have a state for each feasible combination of words, which quickly becomes intractable. \\ 
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
 		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
@@ -160,15 +159,14 @@ For a $2$-gram model, the transition probabilities can be directly derived by no
 	\label{fig:lm_hmm}
 	\hspace{1cm}
 \end{minipage}
-
-
+It should be noted that other approaches for language modeling exist, most notably recurrent neural network based language models \cite{mikolov2011extensions}. 
 \subsection{Decoding Process}
-TODO: Rewrite correctly. We can only not use viterbi if we do single-pass decoding. 
-The decoding step combines the acoustic model, dictionary, and language model are combined into one large model to find the text for a given observed utterance. This section describes decoding in a very fundamental way. In real-world applications, may more details are considered.  \cite{huang2001spoken} gives a very detailed description of different decoding approaches.\\
+TODO: Maybe we can describe that better? \\ \\
+The decoding step combines the acoustic model, dictionary, and language model are combined into one large model to find the text for a given observed utterance. This section describes decoding in a very fundamental way. In real-world applications, many more details are considered. \cite{huang2001spoken} and \cite{yu2016automatic} give a very detailed description of different decoding approaches.\\
 It is possible decompose any word $w_i$ to a possible sequences of phones $(\wp_1, ..., \wp_n)$, using the dictionary. We can re-write the fundamental formula of speech recognition in the following way, using the language and acoustic model:
 \begin{align*}
 W^* &= \underset{W}{\arg \max} \; P(X|W) P(W) \\
-&= \underset{W}{\arg \max} \; \left( \sum_{w_i \in W} \sum_{\wp_i \in w_i} A_{\wp_i}(o_i) \right) \sum_{w_i \in W} L(w_i)
+&= \underset{W}{\arg \max} \; \sum_{w_i \in W} \left(  \sum_{\wp_i \in w_i} A_{\wp_i}(o_i) \right) \sum_{w_i \in W} L(w_i)
 \end{align*}
 Here, $X = (o_1, ..., o_n)$ is an observation sequence, and $W = (w_1, ..., w_n)$ is a word sequence. \\ \\ 
 We can also interpret the combination of the acoustic model, language model and dictionary as one large hidden markov model. With this interpretation, we can find the optimal solution $W^*$ with a search through the hidden markov model. We can do so by using a greedy breath-first search with a heuristic, that picks the next state to visit. Such a search algorithm is also called \textit{A* algorithm} in literature \cite{hart1968formal}. However, this approach is not tractable in practice, as the model becomes very large. Therefore, a so-called \textit{beam search} is used. A beam search simply discards paths with a probability that fall below a certain threshold, which we call $mb$. \\ \\
