@@ -30,6 +30,7 @@ We now assume that the probability $p^*_{s_t}$ is produced by the output of a ne
 Where $\delta_{ij}$ is the kronecker delta. \\ \\
 After the neural network acoustic model was trained over the whole training set, labels can be re-written, and another neural network acoustic model can be trained with the new labels. This process can be iterated several times to improve results. 
 \subsection{Maximum Mutual Information Estimation}
+\label{sec:mmie}
 \textit{Maximum mutual information} (\textit{MMI}) estimation was introduced for estimating hidden markov model parameters in speech recognition systems in \ref{bahl1986maximum}. The training criterion given in \ref{bahl1986maximum} maximizes the ability of the model to discriminate between the correct distribution and any other distribution. In other words, this training criterion minimizes the sentence error. Let $\mathcal{V}$ be the set of all utterances. In the context of speech recognition, we can give a loss function that maximizes mutual information between an observation sequence $O = (o_1, ..., o_n)$ and a word sequence $U \in \mathcal{V}$ as follows:
 \[
 \mathcal{L}_{\text{MMI}} = -\log\frac{p(O|U)P(U)}{\sum_{V \in \mathcal{V}} p(O|V)P(V)} 
@@ -69,7 +70,7 @@ In some literature, particularly \cite{ghoshal2013sequence}, a variant is used:
 \end{align}
 
 \subsection{Overall Risk Criterion Estimation}
-
+\label{sec:ocre}
 The family of \textit{overall risk criterion estimation} (\textit{ORCE}), or \textit{minimum bayes risk} (\textit{MBR}) objective functions for hidden markov models was introduced in \cite{kaiser2000novel}. They are optimized to minimize the number of insertions, deletions and substitutions at either word, phone, or state level. The specific variants are called \textit{minimum word error} (\textit{MWE}) and \textit{minimum phone error} (\textit{MPE}) criterion for words and phones. For minimizing the error at state level, the criterion is called \textit{state minimum bayes risk} (\textit{sMBR}). Several pieces of literature suggest that the MPE and sMBR objective functions, if carefully tuned, perform better than MMI or maximum likelihood estimation in experiments \cite{povey2002minimum}\cite{gibson2008minimum}\cite{povey2005discriminative}\cite{peddinti2015jhu}. \\ \\
 We can formally define the whole family as loss function: 
 
