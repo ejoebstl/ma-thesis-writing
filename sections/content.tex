@@ -29,9 +29,9 @@ Each time frame consists of 40 lMEL features.
 The count of layers and width of each layer is one of the most important design parameters for neural networks. As in \cite{peddinti2015reverberation}, all our models use the same amount of channels for each TDNN unit. Only the count of observed time frames changes with each layer. \\ \\
 \begin{minipage}{\linewidth}
 	\centering 
-	\begin{tabular} {|l | c | c | c | c | c | c | c | c | c | c | c | c |}
+	\begin{tabular} {|l !{\vrule width 1pt} c | c | c | c !{\vrule width 1pt} c | c | c | c | c |}
 		\hline
-		Model & \multicolumn{4}{c|}{4 Layer} & \multicolumn{5}{c|}{5 Layer} \\
+		Model & \multicolumn{4}{c !{\vrule width 1pt}}{4 Layer} & \multicolumn{5}{c|}{5 Layer} \\
 		\hline
 		Layer & 1 & 2 & 3 & 4 & 1 & 2 & 3 & 4 & 5 \\
 		\hline
@@ -293,7 +293,7 @@ Our experiments have shown that the $l_p$ and $l_z$ parameters are depending on 
 \end{axis}
 \end{tikzpicture}
 \end{minipage}
-\captionof{figure}{Illustrative example of the word error rate for different $L_p$ and $L_z$ parameters for a four-layer TDNN (left) and a three-layer TDNN (right) TODO is the 3L TDNN here a good idea? }
+\captionof{figure}{Illustrative example of the word error rate for different $L_p$ and $L_z$ parameters for a four-layer TDNN (left) and a three-layer TDNN (right) TODO grid is being regenerated with i12 and i24}
 \label{fig:lp_lz}
 \end{minipage}
 \\ \\
