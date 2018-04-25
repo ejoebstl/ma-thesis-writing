@@ -56,9 +56,9 @@ In literature, \textit{Mel-Frequency-Cepstral-Coefficients} (\textit{MFCCs}) are
 
 \subsection{Acoustic Model}
 \label{sec:acoustic_model}
-The acoustic model $A$ is responsible of giving us the likelihood of observing a certain word sequence $W$, for a given sequence of features $a$. 
+The acoustic model $A$ is responsible of giving us the likelihood of observing a certain word sequence $W$, for a given sequence of features $X$. 
 \[
-	A_W(o) = P(a|w)
+	P(X|W)
 \]
 Since language does not have one fixed speed, but can rather be slow or fast, acoustic models usually make use of hidden markov models combined with some discriminative classification approach. The discriminative classifier is responsible for predicting the observation probability for a certain symbol of the hidden markov model. The most prominent classifier for this specific task is the gaussian mixture models, which combines several normal distributions to approximate a more complex distribution. The parameters of the acoustic model are usually learned using the Baum-Welch equations introduced in the previous section. \\ \\
 Before we explain the architecture of the hidden markov model model used for the acoustic model, we have to introduce the linguistic concepts of \textit{phonemes}, \textit{phones} and \textit{allophones}. Phonemes are sound atoms in a spoken language, that are relevant for the meaning of a spoken word. In other words, if a phoneme in a spoken word changes, the meaning of this word would change. Allophones are different pronunciation version of the same phoneme. \textit{Phones} are simply distinct sounds that are found in a language, regardless of whether swapping a phone changes the meaning of the word or not. \\ \\
@@ -130,10 +130,10 @@ Figure \ref{fig:dictionary_hmm} shows such a model for a single word. Emissions 
  
 \subsection{Language Model}
 \label{sec:language_model}
-The language model models the probability of word sequences, or in other terms, the probability of a word following a certain other world. Since languages tend to have many words, calculating the transmission probability for each given word pair would be intractable. Instead of this, so called $n$-gram language models can be used. $n$-gram language models count the occurrence of word tuples of length $n$ in a large text corpora. The occurrences are then used to calculate the probability of a word $w_1$, given $n - 1$ predecessors $w_2, ..., w_n$.
+In the fundamental formula of speech recognition, the language model gives the probability of a word sequence. Practically, the language model gives the probability of a word following a certain sequence of words. Since languages tend to have many words, calculating the transmission probability for each given word pair would be intractable. Instead of this, so called $n$-gram language models can be used. $n$-gram language models count the occurrence of word tuples of length $n$ in a large text corpora. The occurrences are then used to calculate the probability of a word $w_i$, given $n - 1$ predecessors $w_{i - 1}, ..., w_{i - n}$.
 
 \[
-L(w_1) = P(w_1|w_2,...,w_n)
+P(w_i|w_{i - 1},...,w_{i - n})
 \]
 
 For a $2$-gram model, the transition probabilities can be directly derived by norming the count of occurrences for each successor. An example for such a model is shown in figure \ref{fig:lm_hmm}. For larger $n$, we have a state for each feasible combination of words, which quickly becomes intractable. \\ 
@@ -169,7 +169,7 @@ W^* &= \underset{W}{\arg \max} \; P(W) \; \underset{Q}{\max} \; P(X|Q)
 \end{align}
 This formulation is called the \textit{viterbi approximation} \cite{huang2001spoken}. With it finding the probability for a certain word sequence given the observation sequence $X$ is reduced to finding the probability of observing a state sequence, given an observation sequence. Since our acoustic model is HMM-based, we can use the viterbi algorithm to find this probability. We can even expand the idea and include the language model into the viterbi search: Every time a word boundary is crossed, we can multiply the probability of our current path with the probability of the given word transition. This approach can be loosely formulated in the following way: 
 \begin{align*}
-W^* &= \underset{W}{\arg \max} \; \sum_{w_i \in w} P(w_i|w_{i - 1},...,w_n) \sum_{s_j \in w} p(o_j | s, s_{j - 1})
+W^* &= \underset{W}{\arg \max} \; \sum_{w_i \in w} P(w_i|w_{i - 1},...,w_{i - n}) \sum_{s_j \in w} p(o_j | s, s_{j - 1})
 \end{align*}
 Here, we evaluate the language for each word $w_i$ in our word sequence $W$, given the predecessors $w_{i - 1},...,w_n$ relevant for the language model. We multiply this probability with the sum of likelihoods of each state $s_j$ in the word $w_j$, given the previous state and the observation at $o_j$. With this formulation, the whole model can be expressed as a single HMM. It is possible to search for the most probable word sequence using the viterbi algorithm. \\ \\ 
 The formulation of the viterbi algorithm given in section \ref{sec:hmm_viterbi} os naive and visits all possible states. We can save resources by using a greedy breath-first search with a heuristic, that picks the next state to visit. Such a search algorithm is also called \textit{A* algorithm} in literature \cite{hart1968formal}. However, this approach also is not tractable in practice, as the model becomes very large for tasks with many vocabularies. Therefore, a so-called \textit{beam search} is used. A beam search discards paths with a probability that fall below a certain threshold, which we call the beam or $mb$. \\ \\
