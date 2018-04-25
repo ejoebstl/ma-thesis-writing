@@ -14,17 +14,17 @@
 
 \chapter{Design of a TDNN acoustic model}
 \label{ch:tdnn_design}
-To find a good design for a TDNN acoustics model, we had to make several design decisions. Most of the design decisions were justified by experiments, while some were taken from related work. This chapter summarizes the decisions made and the corresponding results. In some cases, we will also provide a comparison with a fully-connected network, which served as our experiment baseline. It should be noted that the experiments described in \cite{peddinti2015jhu} and \cite{peddinti2015reverberation} provided the main inspiration for this work, therefore we based some of our parameters on their result.
+Out approach for creating a robust TDNN acoustic model is to find a TDNN model that performs good on clean first. Therefore, we had to make several design decisions. Most of the design decisions were justified by experiments, while some were taken from related work. This chapter summarizes the decisions made and the corresponding results. In some cases, we will also provide a comparison with a fully-connected network, which served as our experiment baseline. It should be noted that the experiments described in \cite{peddinti2015jhu} and \cite{peddinti2015reverberation} provided the main inspiration for this work, therefore we based some of our parameters on their result.
 \section{Training Data and System Setup}
-All experiments in this work only concern the neural network part of the acoustic model, which is a HMM/TDNN hybrid. The speech recognition system itself, as well as all data, the HMM part of the acoustic model, the dictionary and the language model, are taken from the system described in \cite{nguyen20162016}. The system is built upon the Janus recognition toolkit \cite{finke1997karlsruhe}. We utilize a four-gram language model and the CMU Pronouncing Dictionary \cite{cmudict}, which contains 39 phones. The acoustic model has 8156 different distributions, which means that the HMM part of our acoustic model has 8156 different states. \\ \\
+All experiments in this work only concern the neural network part of the acoustic model, which is a HMM/TDNN hybrid. The speech recognition system itself, as well as all data, the HMM part of the acoustic model, the dictionary and the language model, are taken from the system described in \cite{nguyen20162016}. The system is built upon the Janus recognition toolkit \cite{finke1997karlsruhe}. We utilize a four-gram language model and the CMU Pronouncing Dictionary \cite{cmudict}, which contains 39 phones. The acoustic model uses quinphones and has 8156 different distributions, which means that the HMM part of our acoustic model has 8156 different states. \\ \\
 The training and test dataset for the acoustic model consisted of 468 hours of English speech from the TED-LIUM v2 \cite{rousseau2014enhancing}, Broadcast News \cite{graff19971996} and Quaero 2010-2012 Datasets. From these 468~hours, 17 hours are randomly selected as test set, 451~hours are used for the training set. \\ \\
 The development dataset, used for tuning the decoder parameters, consists of the english IWSLT 2013 evaluation dataset for the ASR track \cite{cettolo2013report}. This dataset consists of 3.9~hours of TED talks. The word error rates for all experiments in this chapter were measured on this development set. \\ \\ 
+Each frame of samples in the datasets consists of 40 log-mel features which were normalized over the whole utterance to have mean zero and variance two. Each frame covers 32 milliseconds. The frame shift between successive frames is 10 milliseconds. The sampling rate of the audio data was 16kHz. \\ \\
 The neural network training was done using a custom framework, build onto the top of PyTorch \cite{paszke2017automatic}. Pytorch is a machine learning framework that supports GPU accelleration, parallelization along multiple systems and automatic differentiation. In the context of this work, several contributions were made to the PyTorch framework.  
 \section{Neural Network Parameters}
 This section focuses on parameters that are related to the neural network design. For all models in this section, the word error rate was estimated by using $l_p$ and $l_z$ that were tuned for each model separately. The priors were estimated by counting labels over the whole training set.
-\subsection{Input Features and Input Context}
+\subsection{Input Context}
 The time input context of all our TDNN models is $(-13,9)$, which means the TDNN sees the current frame, thirteen frames in the past, and nine frames in the future. This parameter was taken from the smallest TDNN model described in \cite{peddinti2015reverberation}.
-Each time frame consists of 40 lMEL features. 
 \subsection{Count and Width of Layers}
 The count of layers and width of each layer is one of the most important design parameters for neural networks. As in \cite{peddinti2015reverberation}, all our models use the same amount of channels for each TDNN unit. Only the count of observed time frames changes with each layer. \\ \\
 \begin{minipage}{\linewidth}
@@ -40,7 +40,7 @@ The count of layers and width of each layer is one of the most important design 
 		Stride & 3 & 2 & 2 & 2 & 2 & 1 & 1 & 1 & 1 \\
 		\hline
 	\end{tabular}
-	\captionof{figure}{Kernel size and stride parameters for the two different architectures}
+	\captionof{table}{Kernel size and stride parameters for the two different architectures}
 	\label{tbl:tdnn_layer_design}
 \end{minipage} \\ \\
 We decided to test a four layer model with exactly the same parameters as the smallest model in \cite{peddinti2015reverberation}. This model also included a splicing layer after layer one. The splicing configuration was $(0, 1, 2, 3, 3, 4, 5, 6)$, relative to the previous layer. For the second model we tested, we decided to use larger kernels and one more layer. For this purpose, we removed the splicing layer and increased the layer count to five. Table \ref{tbl:tdnn_layer_design} gives the kernel size and stride over time for each layer in each architecture. For both models, we used an L2-Pooling nonlinearity with group size 10 followed by a batch normalization layer after each TDNN layer.
@@ -71,7 +71,7 @@ Figure \ref{fig:tdnn_layer_design} shows the word error rate for the two differe
 \end{minipage} 
 For this set of experiments, each TDNN layer was followed by a LP-pooling nonlinearity with P of two and group size ten, as well as a batch normalization layer.
 \subsection{Nonlinearity}
-Following \cite{zhang2014improving}, we use a L2-pooling nonlinearity with group size if 10 after each TDNN layer. Using the LP norm can be problematic, as the gradient can become infinity when all inputs in the pooling group are zero. The authors of \cite{peddinti2015reverberation} propose to use a normalization layer after each LP-pooling layer, which solves the problem. We propose an alternate approach, which is setting the gradient to zero if all inputs become zero. Furthermore, we also tested max pooling as a possible nonlinearity. All experiments were conducted on the four-layer architecture described before. Figure \ref{fig:tdnn_nonlinearity} shows the results. \\ \\
+Following \cite{zhang2014improving}, we use a L2-pooling nonlinearity with group size if 10 after each TDNN layer. Using the LP norm can be problematic, as the gradient can become infinity when all inputs in the pooling group are zero. The authors of \cite{zhang2014improving} propose to use a variance normalization layer after each LP-pooling layer, which solves the problem. We propose an alternate approach, which is setting the gradient to zero if all inputs become zero. Furthermore, we also tested max pooling as a possible nonlinearity. All experiments were conducted on the four-layer architecture described before. Figure \ref{fig:tdnn_nonlinearity} shows the results. \\ \\
 \begin{minipage}{\linewidth}
 	\centering
 	\begin{tikzpicture}
@@ -113,7 +113,7 @@ TODO TODO TODO, re-train two feed-forward models with 32b full shuffling and 16b
 		(16.6,LP/BatchNorm)};
 	\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Word Error Rate for different shuffling strategy}
+	\captionof{figure}{TODO TODO TODO Word Error Rate for different shuffling strategy}
 	\label{fig:tdnn_shuffling}
 \end{minipage} \\ \\
 \subsection{Learning Rate and Learning Rate Decay}

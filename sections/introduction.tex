@@ -21,8 +21,8 @@ The goal of this work is to investigate how automated speech recognition could b
 \begin{itemize}
 \item Chapter \ref{ch:preleminaries} introduces basic signal processing and hidden markov models. This chapter also focuses on the properties of reverberated audio from a signal processing perspective.
 \item Chapter \ref{ch:realted_work} introduces important related work. We explain automated speech recognition with a special focus on the training process and the structure of acoustic models. We also give a brief introduction to neural networks which is followed by an introduction to time delay neural networks. We conclude the chapter with a summary of acoustic modelling using neural networks. A special focus is put on sequence training criteria and their differentiation. 
-\item Chapter \ref{ch:tdnn_design} outlines design decisions we made when designing a time delay neural network acoustic model and underpins them with experimental evidence. 
-\item Chapter \ref{ch:results} describes the evaluation of our best time delay neural network acoustic model on reverberated data.
+\item Chapter \ref{ch:tdnn_design} outlines design decisions we made when designing a time delay neural network acoustic model and underpins them with experimental evidence. We also briefly investigate the effects of sequence training. 
+\item Chapter \ref{ch:results} describes the evaluation of our best time delay neural network acoustic model on reverberated data. We also compare the performance on reverberated data to a fully connected network which performed similarly on a clean dataset. 
 \iffalse
 Before we explain the properties of time delay neural networks in depth, we first introduce neural networks in section \ref{sec:neural_networks} as well as the basics of automated speech recognition in section \ref{ch:HMM_ASR}. In chapter \ref{ch:approach} we will explain our solution in detail and then show experimental results in chapter \ref{ch:results}.
 \fi
@@ -203,6 +203,7 @@ We conclude this explanation with a more visual example. Figure \ref{fig:air_spe
 
 
 \section{Hidden Markov Models}
+\label{sec:hmm}
 To explain hidden markov models, we first introduce the concept of a \textit{markov chain}. A markov chain is a sequence of random variables $X = x_1, x_2, \dots. x_{t - 1}, x_{t} \dots, x_T$ and a finite number of states $s_1, \dots, s_n$, where the probability of each entering a certain state at time $t + 1$ at only depends on the state at time $t$:
 
 \[
@@ -266,6 +267,7 @@ For the backward algorithm, we define a similar recursive algorithm, starting fr
 p(O|\lambda) &= \sum_{j = 1}^{N} \beta_0(j)
 \end{align*}
 \subsection{Decoding Problem}
+\label{sec:hmm_viterbi}
 Besides calculating the probability of an observation sequence, finding the most likely state sequence $X = \{X_1, X_2, \dots, X_T\}$ given an observation $O$ and a hidden markov model $\lambda$ is also of interest. 
 This problem is called the \textit{decoding problem}, which is solved by the \textit{viterbi algorithm}. The viterbi algorithm is very similar to the forward algorithm. The one exception is that we search for the maximum probability in each step instead of calculating the sum: \\
 \begin{align*}

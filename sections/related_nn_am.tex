@@ -19,7 +19,7 @@ For maximum likelihood training, we use the viterbi algorithm to calculate the m
 \[
 \mathcal{L}_{\text{ML}} = - \sum_{t = 0}^{n} \log p^*_{s_t}
 \]
-Where $n$ is the length of the utterance, $s_t$ is the correct state at time $t$, given by the viterbi pass, $\theta$ are the model parameters and $o_t$ is the observed feature vector at time $t$. $p^*_{s_t}$ a shorthand for the predicted posterior probability for state $s_t$ produced by our model, formally $p^*(s_t|\theta,o_t)$. For a single frame, this loss function is equal to the negative log likelihood loss from equation \ref{eq:nlll}. \\ \\
+Where $n$ is the length of the utterance, $s_t$ is the correct state at time $t$, given by the viterbi pass, $\theta$ are the model parameters and $o_t$ is the observed feature vector at time $t$. $p^*_{s_t}$ a shorthand for the predicted posterior probability for state $s_t$ produced by our model, formally $p^*(s_t|\theta,o_t)$. For a single frame, this loss function is equal to the negative log likelihood loss from equation \ref{eq:nlll}. Therefore, we also refer to this training variant as cross entropy loss based training. \\ \\
 We now assume that the probability $p^*_{s_t}$ is produced by the output of a neural network model, which uses a softmax activation as the final layer. Let $y^*_{s_j}$ be the output of the layer before the softmax layer for state $s_j$. We can calculate the gradient for our loss function for a single frame with respect to $y^*_{s_j}$ as follows:
 \begin{align*}
 \frac{\partial\mathcal{L}_\text{ML}}{\partial y^*_{s_j}} &= -\frac{\partial \log p^*_{s_t}}{\partial y^*_{s_j}} \\
@@ -36,7 +36,7 @@ After the neural network acoustic model was trained over the whole training set,
 \mathcal{L}_{\text{MMI}} = -\log\frac{p(O|U)P(U)}{\sum_{V \in \mathcal{V}} p(O|V)P(V)} 
 \]
 In \cite{ghoshal2013sequence}, a very similar formulation is given, which is maximized for all utterances, while our loss function is minimized for a single utterance, which is more convenient when working with neural networks. The original formulation af a convenient optimization criterion for MMI estimation was given in \cite{schluter1998comparison}.\\
-Since we are working with automated speech recognition, we can assume that our word sequences can be separated to state sequences $S_U = (s_{U,1},...,s_{U,n})$ which we found using our speech recognition system with $P(U) = \prod_{t = 0}^{n} p^*(s_{U,t})$. This approach was also chosen in \ref{bahl1986maximum}, to simplify the error criterion. Furthermore, we replace the set $\mathcal{V}$ by the set $\mathcal{M}$, which contains the $m$ best state sequences found during our forward-backward pass for the utterance $U$, a practical simplification which is given in \cite{schluter1998comparison}.
+Given the viterbi approximation from equation \ref{eq:viterbi_assumption}, we can assume that our word sequences can be separated to state sequences $S_U = (s_{U,1},...,s_{U,n})$ which we found using our speech recognition system with $P(U) = \prod_{t = 0}^{n} p^*(s_{U,t})$. This approach was also chosen in \ref{bahl1986maximum}, to simplify the error criterion. Furthermore, we replace the set $\mathcal{V}$ by the set $\mathcal{M}$, which contains the $m$ best state sequences found during our forward-backward pass for the utterance $U$, a practical simplification which is given in \cite{schluter1998comparison}.
 \[
 \mathcal{L}_{\text{MMI}} = -\log\frac{\prod_{t = 0}^{n} p^*(o_{t}|s_{U,t})p^*(s_{U,t})}{\sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*(o_{t}|s_{V,t})p^*(s_{V,t})} 
 \]

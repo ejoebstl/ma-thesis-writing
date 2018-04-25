@@ -161,21 +161,23 @@ For a $2$-gram model, the transition probabilities can be directly derived by no
 \end{minipage}
 It should be noted that other approaches for language modeling exist, most notably recurrent neural network based language models \cite{mikolov2011extensions}. 
 \subsection{Decoding Process}
-TODO: Maybe we can describe that better? \\ \\
-The decoding step combines the acoustic model, dictionary, and language model are combined into one large model to find the text for a given observed utterance. This section describes decoding in a very fundamental way. In real-world applications, many more details are considered. \cite{huang2001spoken} and \cite{yu2016automatic} give a very detailed description of different decoding approaches.\\
-It is possible decompose any word $w_i$ to a possible sequences of phones $(\wp_1, ..., \wp_n)$, using the dictionary. We can re-write the fundamental formula of speech recognition in the following way, using the language and acoustic model:
+The decoding step combines the acoustic model, dictionary, and language model to find the text for a given observed utterance. This section describes decoding in a very fundamental way. In real-world applications, many more details are considered. \cite{huang2001spoken} and \cite{yu2016automatic} give a very detailed description of different decoding approaches.\\
+It is possible decompose any word sequence $W$ into a number possible sequences of HMM states using the introduced HMM based acoustic model and the dictionary. Let $Q = (s_1, ..., s_n)$ be such a HMM state sequence. We can approximate the fundamental formula of speech recognition in the following way: 
+\begin{align}
+W^* &= \underset{W}{\arg \max} \; P(W) \; \underset{Q}{\max} \; P(X|Q)
+\label{eq:viterbi_assumption}
+\end{align}
+This formulation is called the \textit{viterbi approximation} \cite{huang2001spoken}. With it finding the probability for a certain word sequence given the observation sequence $X$ is reduced to finding the probability of observing a state sequence, given an observation sequence. Since our acoustic model is HMM-based, we can use the viterbi algorithm to find this probability. We can even expand the idea and include the language model into the viterbi search: Every time a word boundary is crossed, we can multiply the probability of our current path with the probability of the given word transition. This approach can be loosely formulated in the following way: 
 \begin{align*}
-W^* &= \underset{W}{\arg \max} \; P(X|W) P(W) \\
-&= \underset{W}{\arg \max} \; \sum_{w_i \in W} \left(  \sum_{\wp_i \in w_i} A_{\wp_i}(o_i) \right) \sum_{w_i \in W} L(w_i)
+W^* &= \underset{W}{\arg \max} \; \sum_{w_i \in w} P(w_i|w_{i - 1},...,w_n) \sum_{s_j \in w} p(o_j | s, s_{j - 1})
 \end{align*}
-Here, $X = (o_1, ..., o_n)$ is an observation sequence, and $W = (w_1, ..., w_n)$ is a word sequence. \\ \\ 
-We can also interpret the combination of the acoustic model, language model and dictionary as one large hidden markov model. With this interpretation, we can find the optimal solution $W^*$ with a search through the hidden markov model. We can do so by using a greedy breath-first search with a heuristic, that picks the next state to visit. Such a search algorithm is also called \textit{A* algorithm} in literature \cite{hart1968formal}. However, this approach is not tractable in practice, as the model becomes very large. Therefore, a so-called \textit{beam search} is used. A beam search simply discards paths with a probability that fall below a certain threshold, which we call $mb$. \\ \\
-For a real-world implementation we consider three more details. First, we want to avoid multiplications, because they are computationally expensive. We therefore maximize the negative log-likelihood instead of raw probabilities. Second, we add the scaling factor $l_z$ to weight the acoustic model versus the language model, which was shown to be very useful in practice. Also we add another parameter $l_p$ which can be used to penalize too short or too long word sequences. 
+Here, we evaluate the language for each word $w_i$ in our word sequence $W$, given the predecessors $w_{i - 1},...,w_n$ relevant for the language model. We multiply this probability with the sum of likelihoods of each state $s_j$ in the word $w_j$, given the previous state and the observation at $o_j$. With this formulation, the whole model can be expressed as a single HMM. It is possible to search for the most probable word sequence using the viterbi algorithm. \\ \\ 
+The formulation of the viterbi algorithm given in section \ref{sec:hmm_viterbi} os naive and visits all possible states. We can save resources by using a greedy breath-first search with a heuristic, that picks the next state to visit. Such a search algorithm is also called \textit{A* algorithm} in literature \cite{hart1968formal}. However, this approach also is not tractable in practice, as the model becomes very large for tasks with many vocabularies. Therefore, a so-called \textit{beam search} is used. A beam search discards paths with a probability that fall below a certain threshold, which we call the beam or $mb$. \\ \\
+We consider three more details. First, we want to avoid multiplications, because they are computationally expensive. We therefore maximize the negative log-likelihood instead of raw probabilities. Second, we add the scaling factor $l_z$ to weight the acoustic model versus the language model, which was shown to be very useful in practice. Also we add another parameter $l_p$ which can be used to penalize too short or too long word sequences. With this in mind, we can rewrite the fundamental formula in the following way: 
 \begin{align*}
 W^* &= \underset{W}{\arg \max} \; -\log\left(P(X|W) P(W)^{lz} |W|^{lp} \right) \\
 &= \underset{W}{\arg \max} \; -\log P(X|W) - l_z\log P(W) -l_p\log(|W|) 
 \end{align*}
-
 The master beam $mb$, and the coefficients $lz$ and $lp$ are hyper-parameters that have to be tuned for optimal results. 
 
 \subsection{Error Metrics}
