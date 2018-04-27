@@ -276,24 +276,15 @@ Although the results regarding frame error rate look interesting, we did not pur
 \section{Decoding Parameters}
 Tuning decoding parameters is important for good achieving a high accuracy on word level. The decoding parameters are not directly related to the acoustic model, but rather the decoding process. Different acoustic models might still require different decoding parameters for best performance. 
 \subsection{Acoustic Model Scaling and Length Penalty}
-Our experiments have shown that the $l_p$ and $l_z$ parameters are depending on each other. Therefore we can not optimize them separately. Whe choose to perform a grid search over a reasonable parameter space. \\ \\
+Our experiments have shown that the $l_p$ and $l_z$ parameters are depending on each other. Therefore we can not optimize them separately. We choose to perform a grid search over a reasonable parameter space. \\ \\
 \begin{minipage}{\linewidth}
-\begin{minipage}{0.5\linewidth}
+\centering
 \begin{tikzpicture}
-\begin{axis}[grid=both,zlabel=Word Error Rate,xlabel=$l_z$,ylabel=$l_p$]
-	\addplot3[surf,mesh/cols=6,z buffer=sort] file {data/lp_lz_996};
+\begin{axis}[grid=both,zlabel=Word Error Rate,xlabel=$l_p$,ylabel=$l_z$,width=0.7\linewidth]
+	\addplot3[surf,mesh/cols=10,z buffer=sort] file {data/lp_lz_i12};
 \end{axis}
 \end{tikzpicture}
-\end{minipage}
-\hfill
-\begin{minipage}{0.5\linewidth}
-\begin{tikzpicture}
-\begin{axis}[grid=both,xlabel=$l_z$,ylabel=$l_p$]
-\addplot3[surf,mesh/cols=5,z buffer=sort] file {data/lp_lz_128};
-\end{axis}
-\end{tikzpicture}
-\end{minipage}
-\captionof{figure}{Illustrative example of the word error rate for different $L_p$ and $L_z$ parameters for a four-layer TDNN (left) and a three-layer TDNN (right) TODO grid is being regenerated with i12 and i24}
+\captionof{figure}{Illustrative example of the word error rate for different $L_p$ and $L_z$ parameters for a four-layer TDNN}
 \label{fig:lp_lz}
 \end{minipage}
 \\ \\

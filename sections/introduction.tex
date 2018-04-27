@@ -13,15 +13,15 @@
 \chapter{Introduction}
 \label{ch:Introduction}
 
-Automated Speech Recognition is an important way of human computer interaction. Important technology companies provide speech based assistants for their mobile devices, namely Google Now, Microsoft's Cortana and Apple's Siri \cite{yu2016automatic}. The fundamental problem Automated Speech Recognition attempts to solve is to transform natural spoken language to text, which can then easily be processed by computer systems. Especially with the advent of smart mobile devices, more and more use cases for Automated Speech Recognition are available, mainly in the form of smart assistants as described in \cite{lopez2017alexa}. There are also many use cases which are not facing end users, for example the automated transcription of university lectures \cite{muller2016lecture} and the simultaneous transcription of speeches in the European parliament \cite{stuker2007isl}.
+Automated Speech Recognition is an important way of human computer interaction. The fundamental problem Automated Speech Recognition attempts to solve is to transform natural spoken language to text, which can then easily be processed by computer systems. Especially with the advent of smart mobile devices, more and more use cases for Automated Speech Recognition are available, mainly in the form of smart assistants as like   Google Now, Microsoft's Cortana and Apple's Siri \cite{yu2016automatic} \cite{lopez2017alexa}. There are also many use cases which are not targeting end users, for example the automated transcription of university lectures \cite{muller2016lecture} and the simultaneous transcription of speeches in the European parliament \cite{stuker2007isl}.
 
 Despite the recent success of automated speech recognition, many systems still rely on microphones which are close to the speaker, or microphone arrays and beam forming. For many use cases, this is a serious drawback. Users might want to use their smart assistant without picking up their device every time. During lectures, it is hard to transcribe questions from the audience without handing a microphone to the person who asked the question.
-The work \cite{yoshioka2012making} gives a good overview about the problems that arise when distant microphones are used. The most prominent problem is reverberation. Reverberation happens, informally speaking, when a signal is interfered by weaker, delayed copies of itself. \\ \\
+The work \cite{yoshioka2012making} gives a good overview about the problems that arise when distant microphones are used. The most prominent problem is reverberation. Reverberation happens, informally speaking, when a signal is interfered by weaker, delayed reflections of itself. \\ \\
 The goal of this work is to investigate how automated speech recognition could be made more robust against reverberation, using an acoustic model based on time delay neural networks. Our approach for this is the following: 
 \begin{itemize}
 \item Chapter \ref{ch:preleminaries} introduces basic signal processing and hidden markov models. This chapter also focuses on the properties of reverberated audio from a signal processing perspective.
-\item Chapter \ref{ch:realted_work} introduces important related work. We explain automated speech recognition with a special focus on the training process and the structure of acoustic models. We also give a brief introduction to neural networks which is followed by an introduction to time delay neural networks. We conclude the chapter with a summary of acoustic modelling using neural networks. A special focus is put on sequence training criteria and their differentiation. 
-\item Chapter \ref{ch:tdnn_design} outlines design decisions we made when designing a time delay neural network acoustic model and underpins them with experimental evidence. We also briefly investigate the effects of sequence training. 
+\item Chapter \ref{ch:realted_work} introduces important related work. We explain automated speech recognition with a special focus on the structure of acoustic models and the hyperparameters encountered when decoding. We also give a brief introduction to neural networks which is followed by an introduction to time delay neural networks. We conclude the chapter with a summary of acoustic modelling using neural networks. A special focus is put on sequence training criteria and their differentiation. 
+\item Chapter \ref{ch:tdnn_design} outlines design decisions for our time delay neural network acoustic model and underpins them with experimental evidence. We also briefly investigate the behavior of discriminative training in practice. 
 \item Chapter \ref{ch:results} describes the evaluation of our best time delay neural network acoustic model on reverberated data. We also compare the performance on reverberated data to a fully connected network which performed similarly on a clean dataset. 
 \iffalse
 Before we explain the properties of time delay neural networks in depth, we first introduce neural networks in section \ref{sec:neural_networks} as well as the basics of automated speech recognition in section \ref{ch:HMM_ASR}. In chapter \ref{ch:approach} we will explain our solution in detail and then show experimental results in chapter \ref{ch:results}.
@@ -36,7 +36,7 @@ This chapter summarizes concepts we built upon in this work. First, we give a br
 \section{Reverberation and reverberated Audio}
 \label{sec:reverberation}
 
-This section focuses on a formal definition of reverberation and provides some intuition why reverberation makes Automated Speech Recognition difficult. First, we give a very brief introduction to signal processing and system theory, according to the book \cite{leon2015signale}.
+This section focuses on a formal definition of reverberation and provides some intuition why reverberation makes Automated Speech Recognition difficult. We give a very brief introduction to signal processing and system theory, according to the book \cite{leon2015signale}.
 
 \subsection{Continuous Signals and Systems}
 
@@ -63,14 +63,13 @@ x_2(t') = S\{y_2(t')\} \\
 The causality property guarantees that, if two signals are equal for all times $t'$ before a chosen time $t_0$, the output signals of the system processing this signals will also be equal up to this point. Simply put, the output of a system up to time $t_0$ can not depend on any input that happens after $t_0$. It is worth to note that all real systems are always causal. 
 \\ \\
 A linear time-invariant system can be characterized by its so called impulse response $g$, defined as the system output when presented with a so called dirac impulse $\delta$.
-
 \[g(t) = S\{\delta(t)\}\]
 
 The dirac impulse $\delta$ is a function that is formally defined by the following equation. 
-
 \begin{align}
 g(t_2) = \int_{-\infty}^{\infty} y(t)\delta(t - t_2) \dif t \label{eq:dirac} 
 \end{align}
+
 
 It can be said that the dirac impulse is zero for all $t$ not equal to zero. The integral over the dirac impulse defined to be one. 
 \\ \\
@@ -83,13 +82,11 @@ x(t) &= S\{y(t)\} \\
 \end{align*}
 
 Furthermore, we define the convolution operation, $*$, for two given signals as follows.
-
 \[
  (y_1 * y_2)(t) = \int_{-\infty}^{\infty} y(\tau)y_2(\tau - t)  \dif\tau \tag{convolution}
 \]
 
 A convolution is thus an operation that combines two functions to create a new function. Given this definition, we can write the output signal $x$ of a system $S$ given an input signal $y$ as convolution with the impulse response $g$ of the system. 
-
 \[
 x(t) = S\{y(t)\} = (y * g)(t)
 \]
@@ -100,19 +97,20 @@ The acoustic properties of a room can be approximated as a linear time invariant
 
 The measured impulse response of a real reverberation can be seen in figure \ref{fig:air_rir}. This specific sample is taken from the Aachen Impulse Response database \cite{jeub2009binaural}. Such a sample can be created by creating a very brief sound impulse, for example a clap, in an otherwise silent room, and then recording the sound for a few seconds. 
 
-As described in \cite{yoshioka2012making}, we can divide the impulse response into the direct sound itself, early reflections, and late reverberation. The intuition behind is that the original sound wave arrives at the receiver first. After that, reflections of the signal which were reflected once by the walls of the room arrive. These reflections are already dampened significantly. Then, reflections of reflections will be received, and so on, until the sound waves become so weak that the room is silent again. 
+As described in \cite{yoshioka2012making}, we can divide the impulse response into the direct transmitted sound itself, early reflections, and late reverberation. The intuition behind is that the original sound wave arrives at the receiver first. After that, reflections of the signal which were reflected once by the walls of the room arrive. These reflections are already dampened significantly. Then, reflections of reflections will be received, and so on, until the sound waves become so weak that the room is silent again. 
 \\ \\
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
 		\begin{tikzpicture}
-			\begin{axis}[ytick=\empty,height=6cm, ylabel=Amplitude, xlabel=Milliseconds, 
+			\begin{axis}[ytick=\empty,height=6cm,
+			xmin=-100, ylabel=Amplitude, xlabel=Milliseconds, 
 			xticklabel style={name=T\ticknum}]
 			\addplot table [x expr=\coordindex / 4,y=amplitude,color=black,mark=none] {data/air0053bilecture};
 			
 			\end{axis}	
-			\draw[] (1.2,4) -- (1,4) node[anchor=east,font=\tiny] {Sound};
-			\draw[decorate, decoration={brace}] (1.3,3.2) -- (3.00,3.2) node[midway, anchor=south,font=\tiny] {Early Reflections};	
-			\draw[decorate, decoration={brace}] (3.05,3.2) -- (11.8,3.2) node[midway, anchor=south,font=\tiny] {Late Reverberations};
+			\draw[] (2,4) -- (1.7,4) node[anchor=east,font=\tiny, align=right] {Direct \\ Transmission};
+			\draw[decorate, decoration={brace}] (2.2,3.2) -- (4.00,3.2) node[midway, anchor=south,font=\tiny] {Early Reflections};	
+			\draw[decorate, decoration={brace}] (4.05,3.2) -- (11.7,3.2) node[midway, anchor=south,font=\tiny] {Late Reverberations};
 		\end{tikzpicture}
 	}	
 	\captionof{figure}{Room impulse response of a lecture hall}
@@ -121,7 +119,7 @@ As described in \cite{yoshioka2012making}, we can divide the impulse response in
 
 It is important to note that late reverberations can be measurable for several hundred milliseconds.\\\\
 
-To illustrate the impact of reflection and reverberation in a more formal way, we can use the decomposition into direct sound, early reflection, and late reverberation. We define a rather crude approximation of a room impulse response that subsequently overlays an audio signal with weaker copies of itself.
+To illustrate the impact of reflection and reverberation in a more formal way, we can use the decomposition into direct transmitted sound, early reflection, and late reverberation. We define a approximation of a room impulse response that subsequently overlays an audio signal with weaker copies of itself.
 
 \[
 g_{rir}(t) = w_0 \delta(t) + \sum_{1}^{n} w_n * \delta(t - t_n)
@@ -143,13 +141,13 @@ If the room impulse response is non-zero over at a certain time interval $t_n$, 
 \subsection{Impact of Reverberation on Digital Audio Samples}
 
 Before formally introducing automated speech recognition during a later chapter, we want to show that the impact of reverberation can be significant for many applications that process sound or speech.\\ \\
-Before a signal can be processed on a computer, it has to be measured. This process is called \textit{sampling}. Formally, we can describe sampling as the following operation, where $t_A$ is called the sampling interval. We call $y_{digital}$ a discrete signal. 
+Before a signal can be processed on a computer, it has to be measured. This process is called \textit{sampling}. Formally, we can describe sampling as the following operation, where $t_A$ is called the sampling interval. We call $y_{digital}$ a discrete signal: 
 
 \[
 y_{digital}(t) = y(t) * \sum_{n = 0}^{\infty} \delta{t - nt_A} 
 \]
 
-Since this yields a time series of infinite length, signals are usually cut into pieces, which are then independently processed from each other. This is called windowing. For the most simple form of windowing, we can set all signal values outside of a certain range to be zero. Formally, this can be defined by multiplying the signal with a rectangle function $\sigma_{rect,a}(t)$ .
+This yields a time series of infinite length which is hard to process. Thus, signals are usually cut into pieces, which are then independently processed from each other. This is called windowing. For the most simple form of windowing, we can set all signal values outside of a certain range to be zero. Formally, this can be defined by multiplying the signal with a rectangle function $\sigma_{rect,a}(t)$:
 
 \[
 \sigma_{rect,a}(t) = \begin{cases}
@@ -158,7 +156,7 @@ Since this yields a time series of infinite length, signals are usually cut into
 \end{cases}
 \]
 
-When working with signals, especially for classification tasks, methods built upon the \textit{fourier transform} are used very often \cite{zhan1997vocal} \cite{davis1990comparison} \cite{kitasr2018stueker}. The fourier transform transforms a signal $y(t)$ from its time domain to the frequency domain $Y(f)$. The resulting function $Y(f)$ is called the spectrum and gives the distribution of energy over all frequencies for the original signal $y(t)$. The fourier transformation can be defined for continuous or discrete signals, as well as for discrete and windowed signals. In the case of discrete windowed signal, this is called the \textit{short time fourier transform}, which was first described in \cite{gabor1946theory}. It can formally be defined as follows, with an arbitrary window function $\sigma$:
+When working with signals, especially for classification tasks, methods built upon the \textit{fourier transform} are used very often \cite{zhan1997vocal} \cite{davis1990comparison} \cite{kitasr2018stueker}. The fourier transform transforms a signal $y(t)$ from its time domain to the frequency domain $Y(f)$. The resulting function $Y(f)$ is called the \textit{spectrum} and gives the distribution of energy over all frequencies for the original signal $y(t)$. The fourier transformation can be defined for continuous or discrete signals, as well as for discrete and windowed signals. In the case of discrete windowed signal, this is called the \textit{short time fourier transform}, which was first described in \cite{gabor1946theory}. It can formally be defined as follows, with an arbitrary window function $\sigma$:
 
 \begin{align}
 Y(n, \omega) = \sum_{m = -\infty}^{\infty} y(mt_A) \sigma((n - m)t_A) e^{-j \omega n}  
@@ -167,7 +165,7 @@ Y(n, \omega) = \sum_{m = -\infty}^{\infty} y(mt_A) \sigma((n - m)t_A) e^{-j \ome
 
 The function $Y(n, \omega)$ gives the signal magnitude for a certain time window $n$ and a frequency window $\omega$. The time resolution depends reciprocally on the frequency resolution and vice versa. It is not possible to increase the frequency resolution while not decreasing the time resolution.\\ \\
 
-We can investigate the effects of a reverberated signal on the short time fourier transform by applying the same approach as in the previous chapter. The resulting short time fourier spectrum of the reverberated and sampled signal is given as follows.
+We can investigate the effects of a reverberated signal on the short time fourier transform by applying the same approach as in the previous chapter. The resulting short time fourier spectrum of the reverberated and sampled signal is given as follows:
 
 \begin{align}
 Y(n, \omega) = \sum_{m = -\infty}^{\infty} w_0 y(mt_A) \sigma((n - m)t_A) e^{-j \omega n} + 
@@ -204,7 +202,9 @@ We conclude this explanation with a more visual example. Figure \ref{fig:air_spe
 
 \section{Hidden Markov Models}
 \label{sec:hmm}
-To explain hidden markov models, we first introduce the concept of a \textit{markov chain}. A markov chain is a sequence of random variables $X = x_1, x_2, \dots. x_{t - 1}, x_{t} \dots, x_T$ and a finite number of states $s_1, \dots, s_n$, where the probability of each entering a certain state at time $t + 1$ at only depends on the state at time $t$:
+A \textit{Hiddem Markiv Model} (\textit{HMM}) is a discriminative model. Understanding hidden markov models throughly is fundamental for understanding automated speech recognition systems that build upon hidden markov models. 
+
+To explain hidden markov models, we first introduce the concept of a \textit{markov chain}. A markov chain is a sequence of random variables $X = x_1, x_2, \dots. x_{t - 1}, x_{t} \dots, x_T$ and a finite number of states $s_1, \dots, s_n$, where the probability of entering a certain state at time $t + 1$ only depends on the state at time $t$:
 
 \[
 P(x_{t + 1} = s_{j_{t + 1}} | x_{t} = s_{j_t}, x_{t - 1} = s_{j_{t - 1}} \dots, x_{1} = s_{j_{1}}) = P(x_{t + 1} = s_{j_{t + 1}} | x_{t} = s_{j_t})
@@ -223,7 +223,7 @@ b_j(k) &= p(v_k | x_t = s_j) \\
 \pi_i &= p(x_1 = s_i)
 \end{align*}
 
-The tuple $\lambda = (S, V, A, B, \pi)$ specifies a \textit{hidden markov model}. We furthermore introduce the graphical notation for hidden markov models seen in figure \ref{fig:hmm}. Unspecified transitions and observations have probability zero. 
+The tuple $\lambda = (S, V, A, B, \pi)$ specifies a \textit{hidden markov model}. We furthermore introduce the graphical notation for hidden markov models seen in figure \ref{fig:hmm}. Unspecified transitions and observations have probability zero. \\ 
 
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
@@ -269,17 +269,17 @@ p(O|\lambda) &= \sum_{j = 1}^{N} \beta_0(j)
 \subsection{Decoding Problem}
 \label{sec:hmm_viterbi}
 Besides calculating the probability of an observation sequence, finding the most likely state sequence $X = \{X_1, X_2, \dots, X_T\}$ given an observation $O$ and a hidden markov model $\lambda$ is also of interest. 
-This problem is called the \textit{decoding problem}, which is solved by the \textit{viterbi algorithm}. The viterbi algorithm is very similar to the forward algorithm. The one exception is that we search for the maximum probability in each step instead of calculating the sum: \\
+This problem is called the \textit{decoding problem}, which is solved by the \textit{viterbi algorithm}. The viterbi algorithm is very similar to the forward algorithm. The main difference is that we search for the maximum probability in each step instead of calculating the sum: \\
 \begin{align*}
 \delta_(j) &= \pi_j b_j(o_1) \\
 \mathcal{T}_t(j) &= \; \underset{k}{\arg \max} \; \left\{  a_{ij}\delta_{t-1}(k) \right\} \\
 \delta_t(j) &= b_j(o_t) a_{ij}\delta_{t-1}(\mathcal{T}_t(j)) \\
 \end{align*} \\ 
-The path with the highest probability is then given by finding the highest $\delta_T$ for the last time step, and then tracing the assigned maximum predecessors backwards using $\mathcal{T}$.
+The path with the highest probability can be found by starting at the highest $\delta_T$ for the last time step, and then tracing the assigned maximum predecessors backwards using $\mathcal{T}$.
 \subsection{Learning Hidden Markov Model Parameters}
 \label{sec:learning_hmm}
 Given a hidden markov model topology, which is essentially only the number of states $n$ and the number of emission symbols $m$, as well as a training set of observations $O$, we can use the so called \textit{Baum-Welch} algorithm to optimize the initial state probabilities $\pi$, transmission probabilities $A$ and emission probabilities $B$. \\ \\
-We first define two auxiliary variables, given an observation $O$ and the parameters $\lambda$: $\gamma_t(i)$, the probability of being in state $i$ at time $t$ and $\xi_t(i, j)$, the probability of being $i$ at time $t$ and state $j$ at time $t + 1$.
+We first define two auxiliary variables, given an observation $O$ and the parameters $\lambda$: $\gamma_t(i)$, the probability of being in state $i$ at time $t$ and $\xi_t(i, j)$, the probability of being in state $i$ at time $t$ and state $j$ at time $t + 1$.
 
 \begin{minipage}{0.45\textwidth}
 	\begin{align*}
@@ -296,9 +296,8 @@ We first define two auxiliary variables, given an observation $O$ and the parame
 	&=\frac{\alpha_t(i)a_{ij}\beta_{t + 1}(j)b_j(o_{t + 1})}{\sum_{i = 1}^{N} \sum_{j = 1}^{N} \alpha_t(i)a_{ij}\beta_{t + 1}(j)b_j(o_{t + 1})}
 	\end{align*}
 \end{minipage}
-\\ \\
-Using this two auxiliary variables, we can find new parameters $\lambda$ iteratively. Let $\pi^*$, $A^*$ and $B^*$ be the new parameters after one iteration of the Baum-Welch algorithm. 
-
+\\ \\ \\
+Using this two auxiliary variables, we can find new parameters $\lambda$ iteratively. Let $\pi^*$, $a_{ij}^*$ and $b_{j}^*$ be the new parameters after one iteration of the Baum-Welch algorithm. 
 \begin{align*}
 b^*_j(k) &= \frac{\sum_{t = 1, o_t = v_k}^{T} \gamma_t(j)}{\sum_{t = 1}^{T} \gamma_t(j)} \\
 \pi^*_i &= \gamma_1(i) \\

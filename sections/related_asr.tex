@@ -178,7 +178,7 @@ W^* &= \underset{W}{\arg \max} \; P(W) \; \underset{Q}{\max} \; P(X|Q)
 \end{align}
 With this formulation of the search problem, finding the probability for a certain word sequence given the observation sequence $X$ is reduced to finding the probability of observing a state sequence, given an observation sequence. Since our acoustic model is HMM-based, we can use the viterbi algorithm to find this probability. We can even expand the idea and include the language model into the viterbi search: Every time a word boundary is crossed, we can multiply the probability of our current path with the probability of the given word transition. This approach can be loosely formulated in the following way: 
 \begin{align*}
-W^* &= \underset{W}{\arg \max} \; \sum_{w_i \in w} P(w_i|w_{i - 1},...,w_{i - n}) \sum_{s_j \in w} p(o_j | s, s_{j - 1})
+W^* &= \underset{W}{\arg \max} \; \prod_{w_i \in w} P(w_i|w_{i - 1},...,w_{i - n}) \prod_{s_j \in w} p(o_j | s, s_{j - 1})
 \end{align*}
 Here, we evaluate the language for each word $w_i$ in our word sequence $W$, given the predecessors $w_{i - 1},...,w_n$ relevant for the language model. We multiply this probability with the sum of likelihoods of each state $s_j$ in the word $w_j$, given the previous state and the observation at $o_j$. With this formulation, the whole model can be expressed as a single HMM. It is possible to search for the most probable word sequence using the viterbi algorithm. \\ \\ 
 The formulation of the viterbi algorithm given in section \ref{sec:hmm_viterbi} is naive and visits all possible states. We can save resources by using a greedy breath-first search with a heuristic, that picks the next state to visit. Such a search algorithm is also called \textit{A* algorithm} in literature \cite{hart1968formal}. However, this approach also is not tractable in practice, as the model becomes very large for tasks with many vocabularies. Therefore, a so-called \textit{beam search} is used. A beam search discards paths with a probability that fall below a certain threshold, which we call the beam or $mb$. \\ \\
@@ -187,7 +187,7 @@ We consider three more details. First, we want to avoid multiplications, because
 W^* &= \underset{W}{\arg \max} \; -\log\left(P(X|W) P(W)^{lz} |W|^{lp} \right) \\
 &= \underset{W}{\arg \max} \; -\log P(X|W) - l_z\log P(W) -l_p\log(|W|) 
 \end{align*}
-The master beam $mb$, and the coefficients $lz$ and $lp$ are hyper-parameters that have to be tuned for optimal results. 
+The master beam $mb$, and the coefficients $lz$ and $lp$ are hyper-parameters that have to be tuned for optimal results.
 
 \subsection{Error Metrics}
 Every machine learning needs to be tested on data it has not seen before. For this purpose, \textit{error metrics} are used. Error metrics provide a way to objectively measure the performance of a machine learning system. In the field of automated speech recognition, two dominant error metrics are used: \textit{Word error rate} (\textit{WER}) and \textit{frame error rate} (\textit{FER}).

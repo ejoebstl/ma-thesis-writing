@@ -2,13 +2,13 @@
 \section{Time Delay Neural Networks}
 \label{sec:tdnn}
 
-\textit{Time delay neural networks} were introduced by Waibel et. al in \cite{waibel1990phoneme}. The purpose time delay neural networks is to model long time dependencies in a robust way. The central idea behind this network type is to use several time frames of input, and to not use fully-connected layers, but rather layers that impose temporal structure. \\ \\
-To achieve this, the network not only receives the current frame $x_{0,t}$ as input, but also the $n$ previous frames $x_{0,t - 1}, ..., x_{0,t - n}$ as input. These frames are delayed in time, hence the name. Then, the a weighted sum is applied to the input, where the weights are learned parameters. This is called a \textit{TDNN unit} or \textit{TDNN layer} with a filter kernel of size $n$. TDNN layers can be stacked. If this is the case, preceding layers have to be extended to produce an output that contains multiple time frames. \\
-Formally, we can write for $x_{k,t}$, the output of the $k$-th TDNN layer at time t for the feature vectors with size one:
+\textit{Time delay neural networks} were introduced by Waibel et. al in \cite{waibel1990phoneme}. The purpose of time delay neural networks is to model long time dependencies in a robust way. The central idea behind this network type is to use several time frames of input as well as layers that impose temporal structure. \\ \\
+To achieve this, not only consider the current frame $x_{0,t}$ as input, but also the $n$ previous frames $x_{0,t - 1}, ..., x_{0,t - n}$ as input. These frames are delayed in time, hence the name. Then, the a weighted sum is applied to the input, where the weights are learned parameters. This is called a \textit{TDNN unit} or \textit{TDNN layer} with a filter kernel of size $n$. TDNN layers can be stacked. If this is the case, preceding layers have to be extended to produce an output that contains multiple time frames. We call a network of stacked TDNN layers time delay neural network. \\
+Formally, we can calculate the output of the $k$-th TDNN layer at time t for the feature vectors with size one:
 \[
 x_{k,t} = \sum_{i = 1}^n w_{k, i} x_{k - 1, t - i}
 \]
-Where $w_{k, i}$ is denotes the $i$-th weight of the weighted sum used by the $k$-th layer. \\
+Where $w_{k, i}$ is denotes the $i$-th weight of the weighted sum used by the $k$-th layer and $x_{k,t}$ denotes the output of the $k$-th layer at time $t$. \\
 This equation can be rewritten using a discrete convolution operator. In this case $w_k$ is called a convolution kernel. 
 \[
 x_{k} = w_{k} * x_{k - 1}
@@ -17,13 +17,13 @@ For feature vectors containing more than one feature, we introduce the concept o
 \[
 x_{k,j} = w_{k, j} * x_{k - 1}
 \]
-The concept of interpreting TDNN layers as convolutions is not new, but very useful. The generalization to multi-dimensional convolutions is called \textit{convolutional neural networks} and was shown to be incredibly successful \cite{krizhevsky2012imagenet}. Since TDNNs only apply the convolution over the time dimensions, it can be useful to interpret a TDNN as a so called \textit{finite impulse response} (\textit{FIR}) filter. As described in \cite{leon2015signale}, finite impulse response filters are inherently stable, as they the output is always a sum of finite elements. They also do not accumulate rounding errors. \\
-In \cite{waibel1990phoneme}, another interesting property is given: Since there are a lot less learned parameters than operations, a TDNN layer is forced to only focus on the most important features in the data, which leads to better generalization. This so-called \textit{parameter sharing} is achieved by averaging gradients of all operations for their respective weight, independently of the time context $t$. According to \cite{Goodfellow-et-al-2016}, this is one of the main reasons of success for convolutional neural networks in general. 
+The concept of interpreting TDNN layers as convolutions is not new. The generalization to multi-dimensional convolutions is called \textit{convolutional neural networks} and was shown to be incredibly successful \cite{krizhevsky2012imagenet}. Since TDNNs only apply the convolution over the time dimensions, it can be useful to interpret a TDNN as a so called \textit{finite impulse response} (\textit{FIR}) filter. As described in \cite{leon2015signale}, finite impulse response filters are inherently stable, as they the output is always a sum of finite elements. They also do not accumulate rounding errors. \\
+In \cite{waibel1990phoneme}, another interesting property is given: Since there are a lot less learned parameters than operations, a TDNN layer is forced to only focus on the most important features in the data, which leads to better generalization. This so-called \textit{parameter sharing} is achieved by averaging gradients of all operations for the respective weight, independent of the time context $t$. According to \cite{Goodfellow-et-al-2016}, this is one of the main reasons of success for convolutional neural networks in general. 
 
 \subsection{Pooling, Stride and Splicing}
 
-It should be noted that most successful convolutional architectures, as \cite{krizhevsky2012imagenet}, combine convolutional layers with pooling nonlinearities. This is done because pooling over the layer output enables to network to learn several different representations of the same concept, where the pooling will forward the most dominant to the next layer. \\
-Furthermore, it was shown that using larger steps in the convolution operation can lead to better results \textit{springenberg2014striving}. In the context of TDNNs, this means that we would not use adjacent frames for concatenating our input, but frames which are further apart. In literature, this is called \textit{stride} or \textit{strided convolution}, where the the stride $s$ gives the distance between concatenated frame. For a strided convolution, the input vector can be written as:
+Many successful convolutional architectures, as \cite{krizhevsky2012imagenet}, combine convolutional layers with pooling nonlinearities. This is done because pooling over the layer output enables the network to learn several different representations of the same concept, where the pooling will forward the most dominant to the next layer  \cite{Goodfellow-et-al-2016}. \\
+Furthermore, it was shown that using larger steps in the convolution operation can lead to better results \cite{springenberg2014striving}. In the context of TDNNs, this means that we would not use adjacent frames for concatenating our input, but frames which are further apart. In literature, this is called \textit{stride} or \textit{strided convolution}, where the the stride $s$ gives the distance between concatenated frame. For a strided convolution, the input vector can be written as:
 \[
 x_{0,t}, x_{0,t + s}, ..., x_{0,t + ns}
 \] 
@@ -35,7 +35,7 @@ x_{0,ts_1}, x_{0,t + s_2}, ..., x_{0,t + s_n}
 \subsection{A visual Example}
 
 TDNNs allow a straight-forward interpretation of their layer outputs as multi-dimensional signals, which makes visualization over time helpful. We want to conclude this section with the visualization of a tiny TDNN that was trained to distinguish $53$ phones in an audio sample. We use $40$ log-mel coefficients as features. Log-mel coefficients are introduced in section \ref{sec:lmel}. \\ \\
-Figure \ref{fig:tiny_tdnn} shows our tiny TDNN model in the time domain. Our input vector has $40$ channels and a time context of $21$. The first TDNN layer uses $40$ filter kernels of size $5*40$ and a stride of $4$. It and is followed by an L2 norm with group size $2$, resulting in a layer output with $5$ time frames and $20$ channels. The second TDNN layer uses $40$ filter kernels of size $5*20$ and a stride of $5$. It is followed by an L2 norm with group size $2$, resulting in an output spanning $1$ time frame and $20$ channels. In the end, we apply a linear layer that maps the $20$ channels to $53$ phone classes, including special classes for silence and noise.\\
+Figure \ref{fig:tiny_tdnn} shows a tiny TDNN model in the time domain. Our input vector has $40$ channels and a time context of $21$. The first TDNN layer uses $40$ filter kernels of size $5*40$ and a stride of $4$. It and is followed by an L2 polling with group size $2$, resulting in a layer output with $5$ time frames and $20$ channels. The second TDNN layer uses $40$ filter kernels of size $5*20$ and a stride of $5$. It is also followed by an L2 pooling with group size $2$, resulting in an output spanning $1$ time frame and $20$ channels. In the end, we apply a linear layer that maps the $20$ channels to $53$ phone classes, including special classes for silence and noise.\\
 \begin{minipage}{\linewidth}
 	\vspace{5mm}
 	\begin{tikzpicture}[x=1.8cm, y=1.5cm]
