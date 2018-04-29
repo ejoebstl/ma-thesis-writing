@@ -1,77 +1,73 @@
 \section{Acoustic Modelling using Neural Networks}
 
-When we use neural networks for acoustic modelling, we usually use the neural network as a part of the acoustic model. As mentioned in section \ref{sec:acoustic_model}, acoustic models combine a discriminative classification algorithm with a hidden markov model. Neural networks can be used as such a discriminative classification algorithm. A neural network can be used to directly predict the likelihood of a state $s_i$ of the hidden markov model $p(x|s_i)$ given a feature $x$. This makes our model essentially a markov chain, since the states are now assumed to be directly observable. In \ref{hinton2012deep}, an excellent summary of the approach is given, although first experiments with neural network based acoustic modeling can be found in the early 90s \cite{bengio1993connectionist}. Notably, recent advancements were with robust acoustic modeling using TDNNs \cite{peddinti2015jhu}. \\ \\
-We can formalize this approach in the framework of hidden markov models by defining exactly a single symbol $v_i$ for each state $s_i$, with the following emission probabilities:
-\[
-b_j(k) = \delta_{bk}
-\]
-Where $\delta_{ij}$ is the so called \textit{kronecker delta}.
-\[
-\delta_{ij} = \begin{cases}
-1 & i = j\\
-0 & \text{otherwise}
-\end{cases} 
-\]
-This formalization might seem unnecessary, but eases the transition from hidden markov model training to neural network training for certain training algorithms. In this case, our neural network is used to predict the likelihood $p(x|b_i)$ of a certain symbol $b_i$.\\
-We will now introduce two loss functions that are used in the field of automated speech recognition. We will also show how we can form gradients from the given loss functions. The gradients can be used to train neural networks according to the back-propagation algorithm described in section \ref{sec:gradient_descend}. Brief versions of this derivations can be found in \cite{ghoshal2013sequence}, detailed analysis of the loss functions can be found in \cite{gibson2008minimum} and \cite{povey2005discriminative}.
+As mentioned in section \ref{sec:acoustic_model}, acoustic models combine a discriminative classification algorithm with a hidden markov model. Neural networks can be used as such a discriminative classification algorithm. A neural network can be used to directly predict the likelihood of a state $s_i$ of the hidden markov model $p(x|s_i)$ given a feature $x$. In this context, we call the states \textit{labels} and the features \textit{samples}. This approach makes our model essentially a markov chain, since the states are now assumed to be directly observable. In \cite{hinton2012deep}, an excellent summary of the approach is given, although first experiments with neural network based acoustic modeling already happened significantly earlier \cite{bengio1993connectionist}. Notably, recent advancements were with robust acoustic modeling using TDNNs \cite{peddinti2015jhu}. \\ \\
+We will now introduce two loss functions that are used in the field of automated speech recognition. Since neural network training is based on gradient descend, will also show how we can derive gradients from the given loss functions. Brief versions of this derivations can be found in \cite{ghoshal2013sequence}, very detailed analysis of the loss functions in the context of ASR can be found in \cite{gibson2008minimum} and \cite{povey2005discriminative}.
 \subsection{Maximum Likelihood Estimation}
-For maximum likelihood training, we use the viterbi algorithm to calculate the most likely state sequence. Then, each audio frame is labeled with its most likely state, according to the viterbi pass. We treat each state as a separate class and use this dataset for training a model using the negative log posterior as loss function \cite{kitasr2018stueker}. This optimizes the frame error rate. Formally, this loss function be written for an utterance as:
+For maximum likelihood training, we use the viterbi algorithm to calculate the most likely state sequence on for a given reference sentence and corresponding observations. This is called a \textit{forced alignment}. Then, each audio frame is labeled with its most likely state, according to the viterbi pass. We treat each state as a separate class and use this dataset for training a model using the negative log posterior as loss function. This optimizes the frame error rate. Formally, this loss function be written for an utterance as:
 \[
-\mathcal{L}_{\text{ML}} = - \sum_{t = 0}^{n} \log p^*_{s_t}
+\mathcal{L}_{\text{CE}} = - \sum_{t = 0}^{n} \log p^*_{s_t}
 \]
-Where $n$ is the length of the utterance, $s_t$ is the correct state at time $t$, given by the viterbi pass, $\theta$ are the model parameters and $o_t$ is the observed feature vector at time $t$. $p^*_{s_t}$ a shorthand for the predicted posterior probability for state $s_t$ produced by our model, formally $p^*(s_t|\theta,o_t)$. For a single frame, this loss function is equal to the negative log likelihood loss from equation \ref{eq:nlll}. Therefore, we also refer to this training variant as cross entropy loss based training. \\ \\
-We now assume that the probability $p^*_{s_t}$ is produced by the output of a neural network model, which uses a softmax activation as the final layer. Let $y^*_{s_j}$ be the output of the layer before the softmax layer for state $s_j$. We can calculate the gradient for our loss function for a single frame with respect to $y^*_{s_j}$ as follows:
+Where $n$ is the length of the utterance, $s_t$ is the correct state at time $t$, given by the viterbi pass and $o_t$ is the observed feature vector at time $t$. $p^*_{s_t}$ a shorthand for the predicted posterior probability for state $s_t$ produced by our model, formally $p^*(s_t|o_t)$. For a single frame, this loss function is equal to the negative log likelihood loss from equation \ref{eq:nlll}. Therefore, we also refer to this training variant as cross entropy loss based training. \\ \\
+We now assume that the probability $p^*_{s_t}$ is produced by the output of a neural network model which uses a softmax activation as the final layer. Let $y^*_{s_j}$ be the output of the layer before the softmax layer for state $s_j$. We can calculate the gradient for our loss function for a single frame with respect to $y^*_{s_j}$ as follows:
 \begin{align*}
 \frac{\partial\mathcal{L}_\text{ML}}{\partial y^*_{s_j}} &= -\frac{\partial \log p^*_{s_t}}{\partial y^*_{s_j}} \\
 &= -\frac{\partial \; \log \frac{\exp \left(y^*_{s_t}\right)}{\exp\left(\sum_{i = 0}^{n} y^*_{s_j}\right)}}{\partial y^*_{s_j}} \\
 &= -\frac{\partial \; y^*_{s_t} - \sum_{i = 0}^{n} y^*_{s_j}}{\partial y^*_j} \\
 &= 1 - \delta_{tj}
 \end{align*}
-Where $\delta_{ij}$ is the kronecker delta. \\ \\
+Where $\delta_{ij}$ is the so called \textit{kronecker delta}.
+\[
+\delta_{ij} = \begin{cases}
+1 & i = j\\
+0 & \text{otherwise}
+\end{cases} 
+\] \\
 After the neural network acoustic model was trained over the whole training set, labels can be re-written, and another neural network acoustic model can be trained with the new labels. This process can be iterated several times to improve results. 
 \subsection{Maximum Mutual Information Estimation}
 \label{sec:mmie}
-\textit{Maximum mutual information} (\textit{MMI}) estimation was introduced for estimating hidden markov model parameters in speech recognition systems in \ref{bahl1986maximum}. The training criterion given in \ref{bahl1986maximum} maximizes the ability of the model to discriminate between the correct distribution and any other distribution. In other words, this training criterion minimizes the sentence error. Let $\mathcal{V}$ be the set of all utterances. In the context of speech recognition, we can give a loss function that maximizes mutual information between an observation sequence $O = (o_1, ..., o_n)$ and a word sequence $U \in \mathcal{V}$ as follows:
+\textit{Maximum mutual information} (\textit{MMI}) estimation was introduced for estimating hidden markov model parameters in speech recognition systems in \cite{bahl1986maximum}. The training criterion maximizes the ability of the model to discriminate between the correct distribution and any other distribution. In other words, this training criterion minimizes the sentence error. Let $\mathcal{V}$ be the set of all utterances. In the context of speech recognition, we can give a loss function that maximizes mutual information between an observation sequence $O = (o_1, ..., o_n)$ and a word sequence $U \in \mathcal{V}$ as follows:
 \[
 \mathcal{L}_{\text{MMI}} = -\log\frac{p(O|U)P(U)}{\sum_{V \in \mathcal{V}} p(O|V)P(V)} 
 \]
-In \cite{ghoshal2013sequence}, a very similar formulation is given, which is maximized for all utterances, while our loss function is minimized for a single utterance, which is more convenient when working with neural networks. The original formulation af a convenient optimization criterion for MMI estimation was given in \cite{schluter1998comparison}.\\
-Given the viterbi approximation from equation \ref{eq:viterbi_assumption}, we can assume that our word sequences can be separated to state sequences $S_U = (s_{U,1},...,s_{U,n})$ which we found using our speech recognition system with $P(U) = \prod_{t = 0}^{n} p^*(s_{U,t})$. This approach was also chosen in \ref{bahl1986maximum}, to simplify the error criterion. Furthermore, we replace the set $\mathcal{V}$ by the set $\mathcal{M}$, which contains the $m$ best state sequences found during our forward-backward pass for the utterance $U$, a practical simplification which is given in \cite{schluter1998comparison}.
+In \cite{ghoshal2013sequence}, a very similar formulation is given, which is maximized over all utterances, while our loss function is minimized for a single utterance $U$. This is more convenient when working with neural networks. The original formulation af a convenient optimization criterion for MMI estimation was given in \cite{schluter1998comparison}.\\
+Given the viterbi approximation from equation \ref{eq:state_based_viterbi_approximation}, we can assume that our word sequences can be separated to state sequences $S_U = (s_{U,1},...,s_{U,n})$ which we found using our speech recognition system with $P(U) = \prod_{t = 0}^{n} p^*(s_{U,t})$. This approach was also chosen in \ref{bahl1986maximum}, to simplify the error criterion. Furthermore, we replace the set $\mathcal{V}$ by the set $\mathcal{M}$, which contains the $m$ best state sequences found during our forward-backward pass for the utterance $U$, a practical simplification which is given in \cite{schluter1998comparison}. The criterion becomes: 
+\\ 
 \[
 \mathcal{L}_{\text{MMI}} = -\log\frac{\prod_{t = 0}^{n} p^*(o_{t}|s_{U,t})p^*(s_{U,t})}{\sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*(o_{t}|s_{V,t})p^*(s_{V,t})} 
-\]
+\] \\
 With the theorem of bayes, we can expand:
-\[
+\[ \\
 p^*(o_{t}|s_{U,t}) = \frac{p^*(s_{U,t}|o_{t})}{p^*(s_{U,t})}
-\]
-With this expansion, we can simplify and express $\mathcal{L}_{\text{MMI}}$ in terms of $p^*(s_{U,t}|o_{t})$.
+\] \\
+With this, we can simplify and express $\mathcal{L}_{\text{MMI}}$ in terms of $p^*(s_{U,t}|o_{t})$. \\
 \[
 \mathcal{L}_{\text{MMI}} = -\log\frac{\prod_{t = 0}^{n} p^*(s_{U,t}|o_{t})}{\sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*(s_{V,t}|o_{t})} 
 \]
-This expression can be differentiated with respect to the posterior probability $p^*(s_{U,t}|o_{t})$ to calculate a gradient for training a neural network model with backpropagation. Again, let $p^*_{s_{j,t}}$ be $p^*(s_{j,t}|o_j)$.
+This expression can be differentiated with respect to the posterior probability $p^*(s_{U,t}|o_{t})$ to calculate a gradient for training a neural network model with backpropagation. Again, let $p^*_{s_{j,t}}$ be $p^*(s_{j,t}|o_t)$.
 \begin{align*}
 \frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \frac{\partial \log \sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\partial p^*_{s_{j,t}}} - \sum_{t = 0}^{n} \frac{\partial \log p^*_{s_{U,t}}}{\partial p^*_{s_{j,t}}} \\
 &= \frac{ \sum_{V \in \mathcal{M}} \delta_{(s_{V,t})(s_{j,t})} \prod_{t = 0}^{n} p^*_{s_{V,t}}}{\sum_{V \in \mathcal{M}} \prod_{t = 0}^{n} p^*_{s_{V,t}}}\frac{1}{p^*_{s_{V,t}}} - \frac{\delta_{(s_{U,t})(s_{j,t})}}{p^*_{s_{j,t}}}
 \end{align*}
 
-We can now rewrite the first fraction in terms of probabilities, more precisely the probability of visiting state $s_{j,t}$ while we observe $O$. The fraction is indeed this probability: We divide the sum of probability of state sequences which visit $s_{j,t}$ by the sum of the probability of all sequences. We can use this to simplify the first fraction.
+We can now rewrite the first fraction in terms of probabilities, more precisely the probability of visiting state $s_{j}$ at time $t$ while we observe $O$. The fraction is indeed this probability: We divide the sum of probability of state sequences which visit $s_{j,t}$ by the sum of the probability of all sequences. We can use this to simplify the first fraction.
 \begin{align*}
-\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \frac{p(x_t = s_{j,t}|O)}{p^*_{s_{V,t}}} - \frac{\delta_{(s_{U,t})(s_{j,t})}}{p^*_{s_{j,t}}}
+\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &= \frac{p(s_{j,t}|O, t)}{p^*_{s_{V,t}}} - \frac{\delta_{(s_{U,t})(s_{j,t})}}{p^*_{s_{j,t}}}
 \end{align*}
 This formulation is familiar. It corresponds to the definition of $\gamma_t(j)$ from section \ref{sec:learning_hmm}, that is produced by the forward-backward algorithm when training hidden markov model parameters. We conclude this derivation by a compact formulation of the gradient for the MMI loss function:
 \begin{align}
 \label{eq:mmi_grad}
 \frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &=  \frac{\gamma_t(j) -\delta_{(s_{U,t})(s_{j,t})}}{p^*_{s_{j,t}}}
 \end{align} 
-In some literature, particularly \cite{ghoshal2013sequence}, a variant is used: 
+In literature, particularly \cite{ghoshal2013sequence}, a variant, which has to be maximized, is used: 
 \begin{align}
 \label{eq:mmi_grad_simple}
-\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &\approx \gamma_t(j) - \delta_{(s_{U,t})(s_{j,t})}
+\frac{\partial\mathcal{L}_{\text{MMI}}}{\partial p^*_{s_{j,t}}} &\approx \frac{\delta_{(s_{U,t})(s_{j,t})} - \gamma_t(j)}{\kappa}
 \end{align}
+Here, $\kappa$ is an acoustic scaling factor, which corresponds to the $l_z$ introduced in section \ref{sec:hyperparams}.
 
 \subsection{Overall Risk Criterion Estimation}
 \label{sec:ocre}
-The family of \textit{overall risk criterion estimation} (\textit{ORCE}), or \textit{minimum bayes risk} (\textit{MBR}) objective functions for hidden markov models was introduced in \cite{kaiser2000novel}. They are optimized to minimize the number of insertions, deletions and substitutions at either word, phone, or state level. The specific variants are called \textit{minimum word error} (\textit{MWE}) and \textit{minimum phone error} (\textit{MPE}) criterion for words and phones. For minimizing the error at state level, the criterion is called \textit{state minimum bayes risk} (\textit{sMBR}). Several pieces of literature suggest that the MPE and sMBR objective functions, if carefully tuned, perform better than MMI or maximum likelihood estimation in experiments \cite{povey2002minimum}\cite{gibson2008minimum}\cite{povey2005discriminative}\cite{peddinti2015jhu}. \\ \\
+The family of \textit{overall risk criterion estimation} (\textit{ORCE}), or \textit{minimum bayes risk} (\textit{MBR}) objective functions for hidden markov models was introduced in \cite{kaiser2000novel}. They are optimized to minimize the number of insertions, deletions and substitutions at either word, phone, or state level. The specific variants are called \textit{minimum word error} (\textit{MWE}) and \textit{minimum phone error} (\textit{MPE}) criterion for words and phones. For minimizing the error at state level, the criterion is called \textit{state minimum bayes risk} (\textit{sMBR}). Several pieces of literature suggest that the MPE and sMBR objective functions, if carefully tuned, perform better than frame based maximum likelihood estimation in experiments \cite{povey2002minimum}\cite{gibson2008minimum}\cite{povey2005discriminative}\cite{peddinti2015jhu}. \\ \\
 We can formally define the whole family as loss function: 
 
 \[
@@ -108,5 +104,5 @@ We now use $\gamma_t(t)$ like before and introduce two new symbols to simplify t
 $\overline{\lambda}(U, V)$ is the average raw accuracy for all sequences, weighted by the probability of each sequence. $\overline{\lambda}(U, V|s_{j,t})$ is the average raw accuracy for all sequences that pass through state $j$ at time $t$, also weighted by the probability of each sequence. \\ \\
 Again, in \cite{ghoshal2013sequence}, a variant of this gradient is defined: 
 \[
-\frac{\partial\mathcal{L}_{\text{OCRE}}}{\partial p^*_{s_{j,t}}} \approx \gamma_t(j) \left[ \overline{\lambda}(U, V) - \overline{\lambda}(U, V|s_{j,t})) \right]
+\frac{\partial\mathcal{L}_{\text{OCRE}}}{\partial p^*_{s_{j,t}}} \approx \frac{\gamma_t(j)}{\kappa} \left[ \overline{\lambda}(U, V) - \overline{\lambda}(U, V|s_{j,t})) \right]
 \]

@@ -14,24 +14,24 @@
 
 \chapter{Design of a TDNN acoustic model}
 \label{ch:tdnn_design}
-Out approach for creating a robust TDNN acoustic model is to find a TDNN model that performs good on clean first. Therefore, we had to make several design decisions. Most of the design decisions were justified by experiments, while some were taken from related work. This chapter summarizes the decisions made and the corresponding results. In some cases, we will also provide a comparison with a fully-connected network, which served as our experiment baseline. It should be noted that the experiments described in \cite{peddinti2015jhu} and \cite{peddinti2015reverberation} provided the main inspiration for this work, therefore we based some of our parameters on their result.
+Our approach for creating a robust TDNN acoustic model is to find a TDNN model that performs good on clean data first. Therefore, we had to make several design decisions. Most of the design decisions were justified by experiments, while some were taken from related work. This chapter summarizes the decisions made and the corresponding results. It should be noted that the experiments about robust acoustic modeling with TDNNs described in \cite{peddinti2015jhu} and \cite{peddinti2015reverberation} provided the main motivation for this work, therefore we based some of our parameters on their result.
 \section{Training Data and System Setup}
-All experiments in this work only concern the neural network part of the acoustic model, which is a HMM/TDNN hybrid. The speech recognition system itself, as well as all data, the HMM part of the acoustic model, the dictionary and the language model, are taken from the system described in \cite{nguyen20162016}. The system is built upon the Janus recognition toolkit \cite{finke1997karlsruhe}. We utilize a four-gram language model and the CMU Pronouncing Dictionary \cite{cmudict}, which contains 39 phones. The acoustic model uses quinphones and has 8156 different distributions, which means that the HMM part of our acoustic model has 8156 different states. \\ \\
-The training and test dataset for the acoustic model consisted of 468 hours of English speech from the TED-LIUM v2 \cite{rousseau2014enhancing}, Broadcast News \cite{graff19971996} and Quaero 2010-2012 Datasets. From these 468~hours, 17 hours are randomly selected as test set, 451~hours are used for the training set. \\ \\
+All experiments in this work only concern the neural network part of our acoustic model, which is a HMM/TDNN hybrid. The speech recognition system itself, as well as all data, the HMM part of the acoustic model, the dictionary and the language model, are based upon the system described in \cite{nguyen20162016}. The system is built upon the Janus recognition toolkit \cite{finke1997karlsruhe}. We utilize a four-gram language model and the CMU Pronouncing Dictionary \cite{cmudict}, which uses 39 phones. The acoustic model uses quinphones and has 8156 different distributions, which means that the HMM part of our acoustic model has 8156 different states. \\ \\
+The training and test dataset for the acoustic model consist of 468 hours of English speech from the TED-LIUM v2 \cite{rousseau2014enhancing}, Broadcast News \cite{graff19971996} and Quaero 2010-2012 datasets. From these 468~hours, 17~hours are randomly selected as test set, 451~hours are used for the training set. \\ \\
 The development dataset, used for tuning the decoder parameters, consists of the english IWSLT 2013 evaluation dataset for the ASR track \cite{cettolo2013report}. This dataset consists of 3.9~hours of TED talks. The word error rates for all experiments in this chapter were measured on this development set. \\ \\ 
-Each frame of samples in the datasets consists of 40 log-mel features which were normalized over the whole utterance to have mean zero and variance two. Each frame covers 32 milliseconds. The frame shift between successive frames is 10 milliseconds. The sampling rate of the audio data was 16kHz. \\ \\
-The neural network training was done using a custom framework, build onto the top of PyTorch \cite{paszke2017automatic}. Pytorch is a machine learning framework that supports GPU accelleration, parallelization along multiple systems and automatic differentiation. In the context of this work, several contributions were made to the PyTorch framework.  
+Each frame of samples in the datasets consists of 40~log-mel features which were normalized over the whole utterance to have mean zero and variance two. Each frame covers 32~milliseconds. The frame shift between successive frames is 10~milliseconds. The sampling rate of the audio data was 16~kHz. \\ \\
+The neural network training was done using a custom framework, build on top of PyTorch \cite{paszke2017automatic}. Pytorch is a machine learning framework that supports GPU accelleration, parallelization along multiple systems and automatic differentiation. In the context of this work, several contributions were made to the PyTorch framework.  
 \section{Neural Network Parameters}
 This section focuses on parameters that are related to the neural network design. For all models in this section, the word error rate was estimated by using $l_p$ and $l_z$ that were tuned for each model separately. The priors were estimated by counting labels over the whole training set.
 \subsection{Input Context}
 The time input context of all our TDNN models is $(-13,9)$, which means the TDNN sees the current frame, thirteen frames in the past, and nine frames in the future. This parameter was taken from the smallest TDNN model described in \cite{peddinti2015reverberation}.
 \subsection{Count and Width of Layers}
-The count of layers and width of each layer is one of the most important design parameters for neural networks. As in \cite{peddinti2015reverberation}, all our models use the same amount of channels for each TDNN unit. Only the count of observed time frames changes with each layer. \\ \\
+The count of layers and width of each layer is one of the most important design parameters for neural networks. As in \cite{peddinti2015reverberation}, all our models use the same amount of channels for each TDNN layer. Only the count of observed time frames changes with each layer. \\ \\
 \begin{minipage}{\linewidth}
 	\centering 
 	\begin{tabular} {|l !{\vrule width 1pt} c | c | c | c !{\vrule width 1pt} c | c | c | c | c |}
 		\hline
-		Model & \multicolumn{4}{c !{\vrule width 1pt}}{4 Layer} & \multicolumn{5}{c|}{5 Layer} \\
+		Model & \multicolumn{4}{c !{\vrule width 1pt}}{Four Layer} & \multicolumn{5}{c|}{Five Layer} \\
 		\hline
 		Layer & 1 & 2 & 3 & 4 & 1 & 2 & 3 & 4 & 5 \\
 		\hline
@@ -43,7 +43,7 @@ The count of layers and width of each layer is one of the most important design 
 	\captionof{table}{Kernel size and stride parameters for the two different architectures}
 	\label{tbl:tdnn_layer_design}
 \end{minipage} \\ \\
-We decided to test a four layer model with exactly the same parameters as the smallest model in \cite{peddinti2015reverberation}. This model also included a splicing layer after layer one. The splicing configuration was $(0, 1, 2, 3, 3, 4, 5, 6)$, relative to the previous layer. For the second model we tested, we decided to use larger kernels and one more layer. For this purpose, we removed the splicing layer and increased the layer count to five. Table \ref{tbl:tdnn_layer_design} gives the kernel size and stride over time for each layer in each architecture. For both models, we used an L2-Pooling nonlinearity with group size 10 followed by a batch normalization layer after each TDNN layer.
+We decided to test a four layer model with exactly the same parameters as the smallest model in \cite{peddinti2015reverberation}. This model also included a splicing layer after layer one. The splicing configuration was $(0, 1, 2, 3, 3, 4, 5, 6)$, relative to the previous layer. For the second model we tested, we decided to use larger kernels and one more layer. For this purpose, we removed the splicing layer and increased the layer count to five. Table \ref{tbl:tdnn_layer_design} gives the kernel size and stride over time for each layer in each architecture. For both models, we used an L2 pooling nonlinearity with group size of ten followed by a batch normalization layer after each TDNN layer.
 \\
 Figure \ref{fig:tdnn_layer_design} shows the word error rate for the two different architectures, given the count of channels. It can be seen that the four-layer architecture performed better than the five-layer architecture. We found the optimal count of channels  for the four-layer model to be 300. This contradicts \cite{peddinti2015reverberation}, where 400 channels were used. \\ \\
 \begin{minipage}{\linewidth}
@@ -69,9 +69,8 @@ Figure \ref{fig:tdnn_layer_design} shows the word error rate for the two differe
 	\captionof{figure}{Word Error Rate for different choices of layer and channel count}
 	\label{fig:tdnn_layer_design}
 \end{minipage} 
-For this set of experiments, each TDNN layer was followed by a LP-pooling nonlinearity with P of two and group size ten, as well as a batch normalization layer.
 \subsection{Nonlinearity}
-Following \cite{zhang2014improving}, we use a L2-pooling nonlinearity with group size if 10 after each TDNN layer. Using the LP norm can be problematic, as the gradient can become infinity when all inputs in the pooling group are zero. The authors of \cite{zhang2014improving} propose to use a variance normalization layer after each LP-pooling layer, which solves the problem. We propose an alternate approach, which is setting the gradient to zero if all inputs become zero. Furthermore, we also tested max pooling as a possible nonlinearity. All experiments were conducted on the four-layer architecture described before. Figure \ref{fig:tdnn_nonlinearity} shows the results. \\ \\
+Following \cite{zhang2014improving}, we tested L2 pooling nonlinearity with group size if ten after each TDNN layer. Using the L2 norm can be problematic, as the gradient is not defined when all inputs in the pooling group are zero. The authors of \cite{zhang2014improving} propose to use a modified batch normalization layer after each LP-pooling layer, which solves the problem. We propose an alternate approach, which is setting the gradient to zero if all inputs become zero. Furthermore, we also tested max pooling as a possible nonlinearity. All experiments were conducted on the four-layer architecture described before. Figure \ref{fig:tdnn_nonlinearity} shows the results. \\ \\
 \begin{minipage}{\linewidth}
 	\centering
 	\begin{tikzpicture}
@@ -79,13 +78,13 @@ Following \cite{zhang2014improving}, we use a L2-pooling nonlinearity with group
 		xbar,xmajorgrids=true,
 		width=0.8\linewidth,height=4.5cm, enlarge y limits=0.5,
 		xmin=15,xlabel={Word Error Rate},
-		symbolic y coords={LP/BatchNorm,MaxPool,LP/GradZero},
+		symbolic y coords={L2/BatchNorm,MaxPool,L2/GradZero},
 		ytick=data,nodes near coords, nodes near coords align={horizontal},
 		]
 		%1009, I24, I12
 		% All with only l[/lz/mb tuning, no custom priors and no softmax
-		\addplot coordinates {(15.5,LP/GradZero) (15.8,MaxPool) 
-		(16.6,LP/BatchNorm)};
+		\addplot coordinates {(15.5,L2/GradZero) (15.8,MaxPool) 
+		(16.6,L2/BatchNorm)};
 		\end{axis}
 	\end{tikzpicture}
 	\captionof{figure}{Word Error Rate for different choices of nonlinearities}
@@ -117,7 +116,7 @@ TODO TODO TODO, re-train two feed-forward models with 32b full shuffling and 16b
 	\label{fig:tdnn_shuffling}
 \end{minipage} \\ \\
 \subsection{Learning Rate and Learning Rate Decay}
-As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for training for stochastic gradient descend, with an initial learning rate of $0.08$ and a momentum of $5$. The SGD variant used is the introduced in section \ref{sec:momentum}, as this was also used in \cite{nguyen20162016}\footnote{This SGD variant is not equal to the default SGD variant implemented in pytorch.}. Figure \ref{fig:newbob_wer} shows the word error rate per epoch when using newbob. It can be seen that there were almost no improvements during 4, but the word error rate improved as soon as the decaying started after epoch 4. Figure \ref{fig:newbob_fer} shows the frame error rate per epoch for the same training run. It can be seen that exponential decay reduces the frame error rate significantly. The model used for generating this plot was the four layer TDNN introduced in the previous section.
+As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for training for stochastic gradient descend, with an initial learning rate of $0.08$ and a momentum of $5$. The SGD variant used is the introduced in section \ref{sec:momentum}, as this was also used in \cite{nguyen20162016}\footnote{This SGD variant is not equal to the default SGD variant implemented in pytorch.}. Figure \ref{fig:newbob_wer} shows the word error rate per epoch when using newbob. It can be seen that there were almost no improvements during epoch four, but the word error rate improved as soon as the decaying started after epoch four. Figure \ref{fig:newbob_fer} shows the frame error rate per epoch for the same training run. It can be seen that exponential decay reduces the frame error rate significantly. The model used for this experiment was the four layer TDNN introduced in the previous section.
 \\ \\
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
@@ -145,6 +144,7 @@ As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for t
 	\captionof{figure}{Word Error Rate per Epoch when using newbob training. The exponential decaying of the learning rate started after epoch four.}
 	\label{fig:newbob_wer}
 \end{minipage}
+ \\ \\
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
 	\begin{axis}[ylabel=Frame Error Rate, xlabel=Epoch, height=6cm, 
@@ -189,10 +189,10 @@ As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for t
 	\captionof{figure}{Frame Error Rate per Epoch when using newbob training. The exponential decaying of the learning rate started after epoch four.}
 	\label{fig:newbob_fer}
 \end{minipage}
-\subsection{Sequence-based Training}
-Since the experiments described in \cite{peddinti2015jhu} show improvement when sMBR sequence training is used, we attempted to use sequence based training as well. Our implementation used maximum mutual information estimation, as described in section \ref{sec:mmie}. We picked this training variant as a first step, since it is easier to implement than any variant of overall risk criterion estimation. Both approaches should show some improvement over cross entropy loss on frame level, according to several bodies of work \cite{povey2005discriminative} \cite{ghoshal2013sequence}. \\ \\
-For MMIE training, we pre-trained a four layer TDNN acoustic model with frame-based cross entropy loss for a single epoch. Then, we started MMIE training on a per-utterance basis. For this purpose, we wrote a small module that enabled interoperability between the Janus recognition toolkit and PyTorch. The training was done on multiple machines with a total of 256 processors, the gradients were averaged before each SGD step. \\ \\
-While our experiments consistently showed high improvements in terms of frame error rate, the word error rate increased significantly: The model reached a WER of $17.6$ using cross entropy loss, but only a WER $25.6$ was reached after the MMIE training finished the first epoch. This effect was also described in more practically oriented literature \cite{su2013error} for MMIE with any further modifications. \\
+\subsection{MMIE Training}
+Since the experiments described in \cite{peddinti2015jhu} show improvement when sMBR discriminative training is used, we attempted to use discriminative based training as well. Our implementation used maximum mutual information estimation, as described in section \ref{sec:mmie}. We picked this training variant as a first step, since it is easier to implement than any variant of overall risk criterion estimation. Both approaches should show some improvement over cross entropy loss on frame level, according to several bodies of work \cite{povey2005discriminative} \cite{ghoshal2013sequence}. \\ \\
+For MMIE training, we pre-trained a four layer TDNN acoustic model with frame-based cross entropy loss for a single epoch. Then, we started MMIE training on a per-utterance basis. For this purpose, we wrote a module that enabled interoperability between the Janus recognition toolkit and PyTorch. The training was done on multiple machines with a total of 256 processors, the gradients were averaged before each SGD step. \\ \\
+While our experiments consistently showed high improvements in terms of frame error rate, the word error rate increased significantly: The model reached a WER of $17.6$ using cross entropy loss, but only a WER $25.6$ was reached after the MMIE training finished the first epoch. This effect was also described in more practically oriented literature \cite{su2013error} for MMIE without any further modifications. \\
 
 \begin{minipage}{\linewidth}
 	\begin{minipage}{0.5\linewidth}
@@ -267,7 +267,7 @@ While our experiments consistently showed high improvements in terms of frame er
 	\end{axis}
 	\end{tikzpicture}
 \end{minipage}
-	\captionof{figure}{Frame Error Rate per Epoch when using cross entropy loss, as well as Frame Error Rate over a single epoch when using MMIE}
+	\captionof{figure}{Frame Error Rate per Epoch when using cross entropy loss, as well as Frame Error Rate over a single epoch when using MMIE on a TDNN}
 	\label{fig:newbob_fer}
 \end{minipage} \\ \\
 Detailed results regarding the frame error rate are shown in figure \ref{fig:newbob_fer}. It can be seen that the MMIE training converged significantly faster. Also, the error on the test data set is significantly closer to the error on the training data set. \\ These results were achieved using the four-layer TDNN model. Caution has to be taken when interpreting the results: While the amount of data in both test data sets is the same, they are not equal as training and testing for MMIE happens on per-utterance basis, while the test and training sets for the cross entropy loss based training were created on per-frame basis. \\ \\
@@ -284,15 +284,15 @@ Our experiments have shown that the $l_p$ and $l_z$ parameters are depending on 
 	\addplot3[surf,mesh/cols=10,z buffer=sort] file {data/lp_lz_i12};
 \end{axis}
 \end{tikzpicture}
-\captionof{figure}{Illustrative example of the word error rate for different $L_p$ and $L_z$ parameters for a four-layer TDNN}
+\captionof{figure}{Illustrative example of the word error rate for different $l_p$ and $l_z$ parameters for a four-layer TDNN}
 \label{fig:lp_lz}
 \end{minipage}
 \\ \\
-An example impact of the $L_p$ and $L_z$ for two different models are illustrated in figure \ref{fig:lp_lz}. Our experiments have shown that the optimal parameters are similar for each of the models we tested. It is still advisable to fine tune the parameters for each model. Taking the initial values for the grid search from an similar model usually leads good result.
+An example impact of the $l_p$ and $l_z$ for two different models are illustrated in figure \ref{fig:lp_lz}. Our experiments have shown that the optimal parameters are similar for each of the models we tested. It is still advisable to fine tune the parameters for each model. Taking the initial values for the grid search from an similar model usually leads to good results.
 \subsection{Master Beam}
 We tested several architectures with different master beams. Master beams between four and six appeared to work best, but we did not find any pattern that correlated with the network architecture. This indicates that the optimal master beam depends on several factors, not just on the architecture of the neural network model itself. 
 \subsection{Neural Network Priors}
-As described in section \ref{sec:ce_loss}, it is important to scale the posteriors generated by the neural network with priors. We tested two different approaches of generating the priors: Generating them from the complete test dataset and also generating them from the output of a trained model. In the second case, thirty minutes of speech data randomly from our dataset, computed the neural network output on it, and counted the occurrence of each label. \\ \\
+As described in section \ref{sec:ce_loss}, it is important to scale the posteriors generated by the neural network with priors. We tested two different approaches of generating the priors: Generating them from the complete test dataset and also generating them from the output of a trained model. In the second case, we selected thirty minutes of speech data randomly from our dataset, computed the neural network output on it, and counted the occurrence of each label in the output. \\ \\
 \begin{minipage}{\linewidth}
 	\centering
 	\begin{tikzpicture}
@@ -310,9 +310,9 @@ As described in section \ref{sec:ce_loss}, it is important to scale the posterio
 	\label{fig:wer_priors}
 \end{minipage} 
 \\
-As illustrated in figure \ref{fig:wer_prior}, calculating the priors from the the output of the model decreased the word error rate significantly. These experiments were done on the four-layered TDNN model. 
+As illustrated in figure \ref{fig:wer_priors}, calculating the priors from the the output of the model decreased the word error rate significantly. These experiments were done on the four-layered TDNN model. 
 \subsection{Softmax Smoothing}
-We also tested the impact of softmax smoothing on the neural network output. The motivation is that a search through a beam search through a hidden markov model does not work very well when the acoustic model is overconfident regarding certain states. Figure \ref{fig:softmax_fer} shows that softmax smoothing decreased the word error rate for our fpur-layer TDNN model. \\ \\
+We also tested the impact of softmax smoothing on the neural network output. The motivation is that a beam search through a hidden markov model does not work very well when the acoustic model is overconfident regarding certain states. Figure \ref{fig:softmax_fer} shows that softmax smoothing decreased the word error rate for our four-layer TDNN model. \\ \\
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
 	\begin{axis}[ylabel=Word Error Rate, xlabel=Softmax Smoothing Factor, height=6cm, 
@@ -331,7 +331,7 @@ We also tested the impact of softmax smoothing on the neural network output. The
 	};
 	\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Word Error Rate per softmax adjustment $1/\tau$ for a four-layer TDNN model}
+	\captionof{figure}{Word Error Rate per softmax adjustment $1/\tau$ for a four-layer TDNN model $\frac{1}{\tau}$}
 	\label{fig:softmax_fer}
 \end{minipage} \\ \\
 

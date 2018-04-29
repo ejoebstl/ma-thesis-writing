@@ -2,10 +2,10 @@
 \section{Automated Speech Recognition}
 \label{ch:HMM_ASR}
 \textit{Automated speech recognition} (\textit{ASR}) is the task of generating a text transcription from a given sample of spoken language using a computer system. In literature, this problem is also referred to as \textit{speech to text} (\textit{SST}). \\
-Many approaches exist for solving this task. In this work, we will focus on automated speech recognition using systems that are based on hidden markov models. The contents of this this section, except otherwise noted, is based upon the lecture Automated Speech Recognition of Karlsruhe Institute of Technology \cite{kitasr2018stueker}, which is in turn based on the books \cite{schukat1995automatische} and \cite{huang2001spoken}. \\ \\
+Many approaches exist for solving this task. In this work, we will focus on automated speech recognition using systems that are based on hidden markov models. The contents of this this section, except otherwise noted are based on the books \cite{schukat1995automatische}, \cite{huang2001spoken} and \cite{yu2016automatic}. \\ \\
 Automated speech recognition systems usually follows an architecture that separates \textit{preprocessing} of the audio signal and \textit{decoding}. The preprocessing transforms a brief time window of the audio signal into a feature vector. The decoding uses a statistical model assembled from an \textit{acoustic model}, a \textit{dictionary} and a \textit{language model} to calculate the most likely text representation, given the feature vectors.\\ \\
 
-More formally, we can treat the decoding as a classification problem. Let $a$ be a set of feature vectors, we seek to find the word sequence $w^*$ that was most likely for $a$ under our model. That can formally be written as follows, where $p(w|a)$ is the conditional probability of event $w$ given $a$:
+More formally, we can treat the decoding as a classification problem. Let $a$ be a set of feature vectors, we seek to find the word sequence $w^*$ that was most likely for $a$ under our model. That can formally be written as follows:
 
 \[
 w^* = \underset{w}{\arg \max} \; P(w|a)
@@ -23,24 +23,24 @@ w^* = \underset{w}{\arg \max} \; P(a|w) P(w)
 \label{eq:asr_base_formula}
 \end{align}
 
-Equation \ref{eq:asr_base_formula} is called the \textit{fundamental equation of automated speech recognition}. While the fundamental equation seems straight forward, the difficult task is to create a reliable and computationally tractable model for approximating the probability of an acoustic feature given a word sequence, $p(a|w)$ and the probability of observing a word sequence $p(w)$. Finding $p(a|w)$ is the purpose of the acoustic model. The language model is responsible for finding $p(w)$. 
+Equation \ref{eq:asr_base_formula} is called the \textit{fundamental equation of automated speech recognition}. While the fundamental equation seems straight forward, the difficult task is to create a reliable and computationally tractable model for approximating the probability of an acoustic feature given a word sequence, $P(a|w)$ and the probability of observing a word sequence $P(w)$. Finding $P(a|w)$ is the purpose of the acoustic model. The language model is responsible for finding $P(w)$. 
 
 \subsection{Preprocessing}
-Preprocessing, also called the \textit{frontend}, transforms some audio signal into a sequence of feature vectors. To do so, we sample an audio signal using a microphone, then the signal is windowed and the frequency spectrum is calculated for each window of the signal. This process is called short time fourier transform, as defined in section \ref{sec:reverberation}, equation \ref{eq:stft}. Hence, the resulting spectral coefficients are also often called \textit{fourier coefficients}. It should be noted that there are more sophisticated approaches to extract the frequency components of a windowed signal, notably the \textit{continous wavelet transform}, as described in \cite{mallat1999wavelet}, which has better properties in terms of time and frequency resolution. \\ \\
+Preprocessing, also called the \textit{frontend}, transforms some audio signal into a sequence of feature vectors. To do so, we sample an audio signal using a microphone, then the signal is windowed and the frequency spectrum is calculated for each window of the signal. This process is called short time fourier transform, as defined equation \ref{eq:stft}. Hence, the resulting spectral coefficients are also often called \textit{fourier coefficients}. It should be noted that there are more sophisticated approaches to extract the frequency components of a windowed signal, notably the \textit{continous wavelet transform}, as described in \cite{mallat1999wavelet}, which has better properties in terms of time and frequency resolution. \\ \\
 There exist numerous approaches to transform the spectrum of a signal to useful features. In this work, we only discuss so called \textit{log-mel coefficients}. 
 \subsubsection{Log-Mel Coefficients}
 \label{sec:lmel}
 Log-mel coefficients were introduced in \cite{waibel1990phoneme} and \cite{waibel1983comparative}. This approach is physiologically motivated: Similar to human hearing, the mel-scale provides a better relative frequency resolution in lower frequencies \cite{waibel1990phoneme}. \\
-As given in \cite{poser1990speech}, the mel-scale is defined by the following relation to the regular frequency spectrum in Hertz: 
+As given in \cite{poser1990speech}, the mel-scale is defined by the following relation to the regular frequency given in Hertz $f_{Hz}$: 
 \[
-MEL(f)=2595\log _{10}\left(1+{\frac {f}{700}}\right)
+MEL(f_{Hz})=2595\log _{10}\left(1+{\frac {f_{Hz}}{700}}\right)
 \]
 Very often, the number of coefficients is reduced to get smaller feature vectors $(\sigma_1, ..., \sigma_n)$. This is done by summing all coefficients in certain windows $\sigma_k$ on the mel-scale: 
 \[
 MEL_k = \int \sigma_k(f) * MEL(f) \delta f 
 \]
 
-Usually a triangle window is used. In literature, the weighted sum is also referred to as \textit{filter bank} \cite{zhan1997vocal}. \\
+Usually a triangle window is used. In literature, the weighted sum is sometimes referred to as \textit{filter bank} \cite{zhan1997vocal}. \\
 The $k$-th log-mel coefficient is then calculated by applying a logarithm:
 \[
 lMEL_k = \log(MEL_k) 
@@ -60,11 +60,11 @@ The acoustic model $A$ is responsible of giving us the likelihood of observing a
 \[
 	P(X|W)
 \]
-Since language does not have one fixed speed, but can rather be slow or fast, acoustic models usually make use of hidden markov models combined with some discriminative classification approach. The discriminative classifier is responsible for predicting the observation probability for a certain symbol of the hidden markov model. The most prominent classifier for this specific task is the gaussian mixture models, which combines several normal distributions to approximate a more complex distribution. The parameters of the acoustic model are usually learned using the Baum-Welch equations introduced in the previous section. \\ \\
+In the case relevant for this work, acoustic models make use of hidden markov models combined with some discriminative classification approach. The discriminative classifier is responsible for predicting the observation probability for a certain symbol of the hidden markov model. The most prominent classifier for this specific task is the gaussian mixture models, which combines several normal distributions to approximate a more complex distribution. The parameters of the acoustic model are usually learned using the Baum-Welch equations introduced in the section \ref{sec:hmm}. \\ \\
 Before we explain the architecture of the hidden markov model model used for the acoustic model, we have to introduce the linguistic concepts of \textit{phonemes}, \textit{phones} and \textit{allophones}. Phonemes are sound atoms in a spoken language, that are relevant for the meaning of a spoken word. In other words, if a phoneme in a spoken word changes, the meaning of this word would change. Allophones are different pronunciation version of the same phoneme. \textit{Phones} are simply distinct sounds that are found in a language, regardless of whether swapping a phone changes the meaning of the word or not. \\ \\
-In the case relevant for this work, the acoustic model models so called context dependent sub-phones, which are then combined into words or word sequences using the dictionary. Sometimes, allophones are modeled as well, to capture variants. For simplicity we will also refer to allophones as phones. \\
-Context dependent phones include predecessor and successor phones into their model. This happens by introducing extra hidden HMM states for $n$-tupels of phones. These context-dependent phones are then called \textit{diphones}, \textit{triphones} or \textit{quinphones}. This approach leads to a very high number of HMM quickly, so context-dependent phones have to be chosen carefully. \\
-For modeling so-called sub-phones, the model distinguishes between start, middle, and end part of an phone as three distinct hidden markov model states, which represent the phone together. This has the advantage of introducing some speed invariance into the model: It does no longer matter whether a certain phone was spoken very slowly or fast. Figure \ref{fig:sub_three_allophone} shows a hidden markov model for such an approach. \\
+In the context of this work, we only work with acoustic models that model so called context dependent sub-phones, which are then combined into words or word sequences using the dictionary. Sometimes, allophones are modeled as well, to capture variants. For simplicity we will also refer to allophones as phones as well. \\
+Context dependent phones include predecessor and successor phones into their model. This happens by introducing extra hidden HMM states for $n$-tupels of phones. These context-dependent phones are then called \textit{polyphones}. In the case of a context of two, three or four phones, they are called \textit{diphones}, \textit{triphones} or \textit{quinphones}, respectively. This approach leads to a very high number of HMM states quickly, so context-dependent phones have to be chosen carefully. \\
+For modeling so-called sub-phones, the model distinguishes between start, middle, and end part of an phone as three distinct hidden markov model states, which represent the phone together. This has the advantage of introducing speed invariance into the model: It does no longer matter whether a certain phone was spoken very slowly or fast. Figure \ref{fig:sub_three_allophone} shows a hidden markov model for such an approach. It is important to note that for this approach, several transition probabilities in the HMM are set to zero to force a certain topology. \\
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
 		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
@@ -94,13 +94,12 @@ For modeling so-called sub-phones, the model distinguishes between start, middle
 A single HMM state in such a model is also referred to as \textit{distribution} or \textit{senone} for historical reasons \cite{yu2016automatic}. \\ \\
 Given a HMM model, we assume we can decompose any word sequence $W$ into a state sequence $s_1,...,s_n$ and every observation $X$ into an observation sequence $o_1,...,0_n$. We can now write the distribution $P(X|W)$ in a state-based way:
 \[
-P(X|W) = \sum_{s_j \in W} p(o_j | s, s_{j - 1})
+P(X|W) = \prod_{s_j \in W} p(o_j | s, s_{j - 1})
 \]
-This very useful formulation is called the \textit{viterbi approximation} \cite{huang2001spoken}. 
 \subsection{Dictionary}
 \label{sec:dictionary}
-The purpose of the dictionary is to describe the pronunciation of words in terms of phones. The dictionary is usually given. A common way to create a dictionary is to generate it using a set of rules and a list of words, and then fine-tune it by hand. The dictionary also contains different pronunciation variants for each word. 
-
+The purpose of the dictionary is to describe the pronunciation of words in terms of phones. A common way to create a dictionary is to generate it using a set of rules and a list of words, and then fine-tune it by hand. The dictionary also contains different pronunciation variants for each word. 
+\\
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
 		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
@@ -131,21 +130,21 @@ The purpose of the dictionary is to describe the pronunciation of words in terms
 	\label{fig:dictionary_hmm}
 	\hspace{1cm}
 \end{minipage}
-Figure \ref{fig:dictionary_hmm} shows such a model for a single word. Emissions are not shown, as each state in this model refers the hidden markov model associated with the corresponding phoneme. Transitions that are not modeled in the dictionary are constant zero, also the dictionary contains no trainable parameters.
+Figure \ref{fig:dictionary_hmm} shows such a model for different variants of a single word. Emissions are not shown, as each state in this model refers the acoustic model associated with the corresponding phone. Transitions that are not modeled in the dictionary are zero, also the dictionary has no trainable parameters. This example does not take polyphones into account. A model including polyphones would lead a significantly larger model. 
  
 \subsection{Language Model}
 \label{sec:language_model}
-In the fundamental formula of speech recognition, the language model gives the probability of a word sequence. 
+In the fundamental formula of speech recognition, the language model gives the probability of a word sequence:
 \[
 P(W)
 \]
 For simplification, we can re-write the language model as probability of a word $w \in W$ following a certain sequence of words.
 \[
-P(W) = \sum_{w_i \in W} P(w_i|w_{i - 1},...,w_{i - n})
+P(W) = \sum_{w_i \in W} p(w_i|w_{i - 1},...,w_{i - n})
 \]
-Since languages tend to have many words, calculating the probability for each given word sequence would be intractable. Instead of this, so called $n$-gram language models can be used. $n$-gram language models count the occurrence of word tuples of length $n$ in a large text corpora. The occurrences are then used to calculate the probability of a word $w_i$, given $n - 1$ predecessors $w_{i - 1}, ..., w_{i - n}$. In other words, $n$-gram language models estimate $P(w_i|w_{i - 1},...,w_{i - n})$. 
+Since languages tend to have many words, calculating the probability for each possible word sequence would be intractable. Instead of this, so called $n$-gram language models can be used. $n$-gram language models count the occurrence of word tuples of length $n$ in a large text corpora. The occurrences are then used to calculate the probability of a word $w_i$, given $n - 1$ predecessors $w_{i - 1}, ..., w_{i - n}$. In other words, $n$-gram language models estimate $p(w_i|w_{i - 1},...,w_{i - n})$. 
 
-For a $2$-gram model, the transition probabilities can be directly derived by counting of occurrences for each successor of each word. An example for such a model is shown in figure \ref{fig:lm_hmm}. For larger $n$, we have a state for each feasible combination of words. The number of states quickly grows very large in this case. \\ 
+For a $2$-gram model, the transition probabilities can be directly derived by counting of occurrences for each successor of each word. An example for such a model is shown in figure \ref{fig:lm_hmm}. For larger $n$, we have a state for each feasible combination of words. The number of states quickly grows very large in this case. \\ \\
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
 		\begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
@@ -171,17 +170,20 @@ For a $2$-gram model, the transition probabilities can be directly derived by co
 It should be noted that other approaches for language modeling exist, for example recurrent neural network based language models \cite{mikolov2011extensions}. 
 \subsection{Decoding Process}
 The decoding step combines the acoustic model, dictionary, and language model to find the text for a given observed utterance. This section describes decoding in a very fundamental way. In real-world applications, many more details are considered. \cite{huang2001spoken} and \cite{yu2016automatic} give a very detailed description of different decoding approaches.\\
-With the viterbi approximation, it is possible decompose any word sequence $W$ into a number possible sequences of HMM states using the introduced HMM-based acoustic model and the dictionary. Let $Q = (s_1, ..., s_n)$ be such a HMM state sequence. We can re-write the fundamental formula of speech recognition in the following way: 
-\begin{align}
-W^* &= \underset{W}{\arg \max} \; P(W) \; \underset{Q}{\max} \; P(X|Q)
-\label{eq:viterbi_assumption}
-\end{align}
-With this formulation of the search problem, finding the probability for a certain word sequence given the observation sequence $X$ is reduced to finding the probability of observing a state sequence, given an observation sequence. Since our acoustic model is HMM-based, we can use the viterbi algorithm to find this probability. We can even expand the idea and include the language model into the viterbi search: Every time a word boundary is crossed, we can multiply the probability of our current path with the probability of the given word transition. This approach can be loosely formulated in the following way: 
+The \textit{viterbi approximation} \cite{huang2001spoken} states that the most likely word sequence can be approximated with the most likely state sequence. With this assumption, it is possible decompose any word sequence $W$ into a number possible sequences of HMM states using the introduced HMM-based acoustic model and the dictionary. Let $Q_W = (s_1, ..., s_n)$ be such a HMM state sequence associated with a word sequence $W$. We can re-write the fundamental formula of speech recognition in the following way \cite{demuynck2002doing}: 
 \begin{align*}
-W^* &= \underset{W}{\arg \max} \; \prod_{w_i \in w} P(w_i|w_{i - 1},...,w_{i - n}) \prod_{s_j \in w} p(o_j | s, s_{j - 1})
+W^* &= \underset{W}{\arg \max} \; P(W) \; \underset{Q_W \in W}{\max} \; P(X|Q_W)
+%\label{eq:viterbi_approximation}
 \end{align*}
-Here, we evaluate the language for each word $w_i$ in our word sequence $W$, given the predecessors $w_{i - 1},...,w_n$ relevant for the language model. We multiply this probability with the sum of likelihoods of each state $s_j$ in the word $w_j$, given the previous state and the observation at $o_j$. With this formulation, the whole model can be expressed as a single HMM. It is possible to search for the most probable word sequence using the viterbi algorithm. \\ \\ 
-The formulation of the viterbi algorithm given in section \ref{sec:hmm_viterbi} is naive and visits all possible states. We can save resources by using a greedy breath-first search with a heuristic, that picks the next state to visit. Such a search algorithm is also called \textit{A* algorithm} in literature \cite{hart1968formal}. However, this approach also is not tractable in practice, as the model becomes very large for tasks with many vocabularies. Therefore, a so-called \textit{beam search} is used. A beam search discards paths with a probability that fall below a certain threshold, which we call the beam or $mb$. \\ \\
+With this formulation of the search problem, finding the probability for a certain word sequence given the observation sequence $X$ is reduced to finding the probability of observing a state sequence, given an observation sequence. Since our acoustic model is HMM-based, we can use the viterbi algorithm to find this probability. We can even expand the idea and include the language model into the viterbi search: Every time a word boundary is crossed, we can multiply the probability of our current path with the probability of the given word transition. This approach can be formulated in the following way: 
+\begin{align}
+W^* &= \underset{W}{\arg \max} \; \prod_{w_i \in W} P(w_i|w_{i - 1},...,w_{i - n}) \; \underset{Q_w \in w_i}{\max} \; \prod_{s_j \in Q_w} p(o_j | s_j, s_{j - 1})
+\label{eq:state_based_viterbi_approximation}
+\end{align}
+Here, we evaluate the language model for each word $w_i$ in our word sequence $W$, given the predecessors $w_{i - 1},...,w_n$ relevant for the language model. We multiply this probability with the sum of likelihoods of each state $s_j$ in most likely variant $Q$ of word $w_j$, given the previous state and the observation at $o_j$. With this formulation, the whole model can be expressed as a single HMM. More specifically, word transition probabilities are also modeled in the HMM for each possible word transition. While it is, in theory, possible to search for the most likely word sequence using the viterbi algorithm using this approach, models built this way fail for large vocabulary tasks as they become intractable. A more thorough explanation about how language models are efficiently integrated can be found in \cite{schukat1995automatische}. \\ 
+\subsubsection{Decoding Hyperparameter}
+\label{sec:hyperparams}
+The formulation of the viterbi algorithm given in section \ref{sec:hmm_viterbi} is naive and visits all possible states. We can save resources by using a greedy breath-first search with a heuristic, that picks the next state to visit. Such a search algorithm is also called \textit{A* algorithm} in literature \cite{hart1968formal}. However, this approach is also not tractable in practice, as the model becomes very large for tasks with many vocabularies. Therefore, a so-called \textit{beam search} is used. A beam search discards paths with a probability that fall below a certain threshold, which we call the beam or $mb$. \\ \\
 We consider three more details. First, we want to avoid multiplications, because they are computationally expensive. We therefore maximize the negative log-likelihood instead of raw probabilities. Second, we add the scaling factor $l_z$ to weight the acoustic model versus the language model, which was shown to be very useful in practice. Also we add another parameter $l_p$ which can be used to penalize too short or too long word sequences. With this in mind, we can rewrite the fundamental formula in the following way: 
 \begin{align*}
 W^* &= \underset{W}{\arg \max} \; -\log\left(P(X|W) P(W)^{lz} |W|^{lp} \right) \\
@@ -190,7 +192,7 @@ W^* &= \underset{W}{\arg \max} \; -\log\left(P(X|W) P(W)^{lz} |W|^{lp} \right) \
 The master beam $mb$, and the coefficients $lz$ and $lp$ are hyper-parameters that have to be tuned for optimal results.
 
 \subsection{Error Metrics}
-Every machine learning needs to be tested on data it has not seen before. For this purpose, \textit{error metrics} are used. Error metrics provide a way to objectively measure the performance of a machine learning system. In the field of automated speech recognition, two dominant error metrics are used: \textit{Word error rate} (\textit{WER}) and \textit{frame error rate} (\textit{FER}).
+Every machine learning system needs to be tested on data it has not seen before. For this purpose, \textit{error metrics} are used. Error metrics provide a way to objectively measure the performance of a machine learning system. In the field of automated speech recognition, three dominant error metrics are used: \textit{frame error rate} (\textit{FER}), \textit{Word error rate} (\textit{WER}) and \textit{sentence error rate}.
 
 \subsubsection{Frame Error Rate}
 Frame error rate simply measures the classification error on frame level and is mostly used in connection with acoustic models. It can be calculated by counting how often the class of a frame was predicted incorrectly by the acoustic model. Given a sequence of classes predicted by our model $Y* = (y^*_1, ..., y^*_n)$ and a sequence of reference labels $Y = (y_1, ..., y_n)$, we can write the frame error rate as follows:
@@ -217,7 +219,7 @@ The word error rate is the most common error metric when testing complete speech
 	\end{cases} & \text{ otherwise}
 \end{cases}
 \end{align*}
-
+\noindent
 The Levenshtein distance of the whole sequence is:
 \[
 \operatorname{LD}(A, B) = \operatorname{LD}_{|A|, |B|}(A, B)
@@ -228,8 +230,9 @@ The word error rate $\operatorname{WER}(W^*, W)$ of two word sequences $W*$ and 
 \]
 Here, $W$ is the \textit{reference hypothesis}, $W^*$ is the output for the system we seek to benchmark.
 \subsubsection{Sentence Error Rate}
-The \textit{sentence error rate} counts errors on an utterance level. As soon as a single word in a utterance is different as in the reference, the sentence is rated as incorrect. The sentence error rate is usually calculated over a corpus $V$ that contains many sentences $v_1,...,v_n$. It can be formally written as:
+The \textit{sentence error rate} counts errors on a sentence level. As soon as a single word in a sentence is different as in the reference, the sentence is rated as incorrect. The sentence error rate is usually calculated over a corpus $V$ that contains many sentences $v_1,...,v_n$. It can be formally written as:
 \[
 \operatorname{SER}(V^*, V) = \frac{1}{n} \sum_{i = 0}^n 1|_{v^*_i = v_i} 
 \]
-Here, $V$ is the reference, $V*$ is the set of sentences predicted by our model. $1|_{v^*_i = v_i}$ is a indicator function that is one iff $v^*_i$ equals $v_i$.
+Here, $V$ is the reference, $V*$ is the set of sentences predicted by our model. $1|_{v^*_i = v_i}$ is a indicator function that is one if and only if $v^*_i$ equals $v_i$. \\
+It should be noted that in ASR, a sentence is not essentially a sentence in the grammatical sense, but rather a certain segment of a larger corpus. Therefore, sentences are also referred to as \textit{utterances}. 
