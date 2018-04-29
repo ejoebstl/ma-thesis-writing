@@ -91,7 +91,7 @@ A variant of exponential decay keeps the learning rate constant for a number epo
 \subsubsection{Momentum}
 \label{sec:momentum}
 
-\textit{Momentum} is another technique that was shown to avoid local minima. When using momentum, we do not apply the gradient directly to our model, but rather use a moving average of the gradient of the last batches. There are multiple versions to achieve momentum when using stochastic gradient descend. This work uses the notation introduced in \ref{polyak1964some}, which was throughly analyzed in the context of deep learning in \ref{sutskever2013importance}:
+\textit{Momentum} is another technique that was shown to avoid local minima. When using momentum, we do not apply the gradient directly to our model, but rather use a moving average of the gradient of the last batches. There are multiple versions to achieve momentum when using stochastic gradient descend. This work uses the notation introduced in \cite{polyak1964some}, which was throughly analyzed in the context of deep learning in \cite{sutskever2013importance}:
 \begin{align*}
 \upsilon_{i, t+1} &= \upsilon_{i, t} * \rho + \epsilon * \frac{\delta E_{t}}{\delta \theta_{i, t}} \\
 \theta_{i, t+1} &= \theta_{i, t} - \upsilon_{i, t+1}

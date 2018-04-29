@@ -247,3 +247,13 @@
     }%
     \let\theauthor\@author
 }
+\newcommand{\scholarship}{
+	\begin{minipage}{0.5\textwidth}
+		\includegraphics[width=\textwidth]{logos/clics_logo}
+		\vspace{1cm} 
+		\\
+		This thesis was written during an exchange at Carnegie Mellon University in Pittsburgh (Pennsylvania) and was kindly supported by a scholarship from CLICS. 
+	\end{minipage}
+}
+
+\lowertitleback{\scholarship}
