@@ -14,7 +14,7 @@
 \label{ch:Conclusion}
 During our evaluation in chapter \ref{ch:results} we found that our TDNN model did not yield a significant improvement over a fully connected model when trained on reverberated data. We also found that a fully connected model with the same input context was capable of slightly outperforming our TDNN model on the reverberated data validation set. This results are difficult to generalize to TDNNs as a whole for the following reasons: 
 \begin{itemize}
-	\item In chapter \ref{ch:tdnn_design}, we we tuned our TDNN on clean data, with the assumption that a TDNN model that performs well on clean data also performs well on reverberated data. 
+	\item In chapter \ref{ch:tdnn_design}, we tuned our TDNN on clean data, with the assumption that a TDNN model that performs well on clean data also performs well on reverberated data. 
 	\item The room impulse response normalization given in \ref{ch:results} might have been too aggressive, thus negating the advantage of TDNNs. In general, it is hard to measure the comprehensibleness of reverberated audio objectively.  
 	\item In literature \cite{peddinti2015jhu} \cite{peddinti2015reverberation}, sMBR training criteria are used for TDNN acoustic model training. It might be worth to investigate this training procedure more closely.  
 \end{itemize}

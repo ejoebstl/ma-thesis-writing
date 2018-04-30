@@ -329,7 +329,7 @@ As described in section \ref{sec:ce_loss}, it is important to scale the posterio
 	\label{fig:wer_priors}
 \end{minipage} 
 \\
-As illustrated in figure \ref{fig:wer_priors}, calculating the priors from the the output of the model decreased the word error rate significantly. These experiments were done on the four-layered TDNN model. 
+As illustrated in figure \ref{fig:wer_priors}, calculating the priors from the output of the model decreased the word error rate significantly. These experiments were done on the four-layered TDNN model. 
 \subsection{Softmax Smoothing}
 We also tested the impact of softmax smoothing on the neural network output. The motivation is that a beam search through a hidden Markov model does not work very well when the acoustic model is overconfident regarding certain states. Figure \ref{fig:softmax_fer} shows that softmax smoothing decreased the word error rate for our four-layer TDNN model. \\ \\
 \begin{minipage}{\linewidth}
