@@ -26,17 +26,14 @@ The time input context of all our TDNN models is $(-13,9)$, which means the TDNN
 \subsection{Count and Width of Layers}
 The count of layers and width of each layer is one of the most important design parameters for neural networks. As in \cite{peddinti2015reverberation}, all our models use the same amount of channels for each TDNN layer. Only the count of observed time frames changes with each layer. \\ \\
 \begin{minipage}{\linewidth}
-	\centering 
-	\begin{tabular} {|l !{\vrule width 1pt} c | c | c | c !{\vrule width 1pt} c | c | c | c | c |}
-		\hline
-		Model & \multicolumn{4}{c !{\vrule width 1pt}}{Four Layer} & \multicolumn{5}{c|}{Five Layer} \\
-		\hline
-		Layer & 1 & 2 & 3 & 4 & 1 & 2 & 3 & 4 & 5 \\
-		\hline
-		Kernel Size & 5 & 2 & 2 & 2 & 5 & 5 & 3 & 2 & 2 \\
-		\hline
-		Stride & 3 & 2 & 2 & 2 & 2 & 1 & 1 & 1 & 1 \\
-		\hline
+	\centering
+	\begin{tabular}{@{\extracolsep{4pt}}lccccccccc@{}}
+		\toprule
+		Model:      & \multicolumn{4}{c}{Four Layer}       & \multicolumn{5}{c}{Five Layer}\\\cmidrule[1pt]{1-1}\cmidrule[1pt]{2-5}\cmidrule[1pt]{6-10}
+		Layer       & 1 & 2 & 3 & 4    & 1 & 2 & 3 & 4 & 5 \\\cmidrule{2-5}\cmidrule{6-10}
+		Kernel Size & 5 & 2 & 2 & 2    & 5 & 5 & 3 & 2 & 2 \\
+		Stride      & 3 & 2 & 2 & 2    & 2 & 1 & 1 & 1 & 1 \\
+		\bottomrule
 	\end{tabular}
 	\captionof{table}{Kernel size and stride parameters for the two different architectures}
 	\label{tbl:tdnn_layer_design}
@@ -334,13 +331,14 @@ As described in section \ref{sec:ce_loss}, it is important to scale the posterio
 \\
 As illustrated in figure \ref{fig:wer_priors}, calculating the priors from the the output of the model decreased the word error rate significantly. These experiments were done on the four-layered TDNN model. 
 \subsection{Softmax Smoothing}
-We also tested the impact of softmax smoothing on the neural network output. The motivation is that a beam search through a hidden markov model does not work very well when the acoustic model is overconfident regarding certain states. Figure \ref{fig:softmax_fer} shows that softmax smoothing decreased the word error rate for our four-layer TDNN model. \\ \\
+We also tested the impact of softmax smoothing on the neural network output. The motivation is that a beam search through a hidden Markov model does not work very well when the acoustic model is overconfident regarding certain states. Figure \ref{fig:softmax_fer} shows that softmax smoothing decreased the word error rate for our four-layer TDNN model. \\ \\
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
-	\begin{axis}[ylabel=Word Error Rate, xlabel=Softmax Smoothing Factor, height=6cm, 
+	\begin{axis}[ylabel=Word Error Rate, xlabel=Softmax Smoothing Factor $1/\tau$, height=6cm, 
 	xticklabel style={name=T\ticknum},grid=major]
 	%I12
 	\addplot coordinates {
+		(0.75,15.2)
 		(0.8,15)
 		(0.85,15)
 		(0.88,15)
@@ -353,7 +351,7 @@ We also tested the impact of softmax smoothing on the neural network output. The
 	};
 	\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Word Error Rate per softmax adjustment $1/\tau$ for a four-layer TDNN model $\frac{1}{\tau}$}
+	\captionof{figure}{Word Error Rate per softmax adjustment $1/\tau$ for a four-layer TDNN model}
 	\label{fig:softmax_fer}
 \end{minipage} \\ \\
 

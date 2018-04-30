@@ -13,14 +13,14 @@
 \chapter{Introduction}
 \label{ch:Introduction}
 
-Automated Speech Recognition is an important way of human computer interaction. The fundamental problem Automated Speech Recognition attempts to solve is to transform natural spoken language to text, which can then easily be processed by computer systems. Especially with the advent of smart mobile devices, more and more use cases for Automated Speech Recognition are available, mainly in the form of smart assistants as like   Google Now, Microsoft's Cortana and Apple's Siri \cite{yu2016automatic} \cite{lopez2017alexa}. There are also many use cases which are not targeting end users, for example the automated transcription of university lectures \cite{muller2016lecture} and the simultaneous transcription of speeches in the European parliament \cite{stuker2007isl}.
+Automatic speech recognition is an important way of human computer interaction. The fundamental problem automatic speech recognition attempts to solve is to transform natural spoken language to text, which can then easily be processed by computer systems. Especially with the advent of smart mobile devices, more and more use cases for automatic speech recognition are available, mainly in the form of smart assistants as like   Google Now, Microsoft's Cortana and Apple's Siri \cite{yu2016automatic} \cite{lopez2017alexa}. There are also many use cases which are not targeting end users, for example the automatic transcription of university lectures \cite{muller2016lecture} and the simultaneous transcription of speeches in the European parliament \cite{stuker2007isl}.
 
-Despite the recent success of automated speech recognition, many systems still rely on microphones which are close to the speaker, or microphone arrays and beam forming. For many use cases, this is a serious drawback. Users might want to use their smart assistant without picking up their device every time. During lectures, it is hard to transcribe questions from the audience without handing a microphone to the person who asked the question.
+Despite the recent success of automatic speech recognition, many systems still rely on microphones which are close to the speaker, or microphone arrays and beam forming. For many use cases, this is a serious drawback. Users might want to use their smart assistant without picking up their device every time. During lectures, it is hard to transcribe questions from the audience without handing a microphone to the person who asked the question.
 The work \cite{yoshioka2012making} gives a good overview about the problems that arise when distant microphones are used. The most prominent problem is reverberation. Reverberation happens, informally speaking, when a signal is interfered by weaker, delayed reflections of itself. \\ \\
-The goal of this work is to investigate how automated speech recognition could be made more robust against reverberation, using an acoustic model based on time delay neural networks. Our approach for this is the following: 
+The goal of this work is to investigate how automatic speech recognition could be made more robust against reverberation, using an acoustic model based on time delay neural networks. Our approach for this is the following: 
 \begin{itemize}
-\item Chapter \ref{ch:preleminaries} introduces basic signal processing and hidden markov models. This chapter also focuses on the properties of reverberated audio from a signal processing perspective.
-\item Chapter \ref{ch:realted_work} introduces important related work. We explain automated speech recognition with a special focus on the structure of acoustic models and the hyperparameters encountered when decoding. We also give a brief introduction to neural networks which is followed by an introduction to time delay neural networks. We conclude the chapter with a summary of acoustic modelling using neural networks. A special focus is put on sequence training criteria and their differentiation. 
+\item Chapter \ref{ch:preleminaries} introduces basic signal processing and hidden Markov models. This chapter also focuses on the properties of reverberated audio from a signal processing perspective.
+\item Chapter \ref{ch:realted_work} introduces important related work. We explain automatic speech recognition with a special focus on the structure of acoustic models and the hyperparameters encountered when decoding. We also give a brief introduction to neural networks which is followed by an introduction to time delay neural networks. We conclude the chapter with a summary of acoustic modelling using neural networks. A special focus is put on sequence training criteria and their differentiation. 
 \item Chapter \ref{ch:tdnn_design} outlines design decisions for our time delay neural network acoustic model and underpins them with experimental evidence. We also briefly investigate the behavior of discriminative training in practice. 
 \item Chapter \ref{ch:results} describes the evaluation of our best time delay neural network acoustic model on reverberated data. We also compare the performance on reverberated data to a fully connected network which performed similarly on a clean dataset. 
 \iffalse
@@ -31,16 +31,16 @@ Before we explain the properties of time delay neural networks in depth, we firs
 \chapter{Preliminaries}
 \label{ch:preleminaries}
 
-This chapter summarizes concepts we built upon in this work. First, we give a brief introduction to signal processing and use this framework to explain the properties of reverberation in a more formal way. Then, we introduce hidden markov models, which are an important concept for understanding most speech recognition systems. 
+This chapter summarizes concepts we built upon in this work. First, we give a brief introduction to signal processing and use this framework to explain the properties of reverberation in a more formal way. Then, we introduce hidden Markov models, which are an important concept for understanding most speech recognition systems. 
 
 \section{Reverberation and reverberated Audio}
 \label{sec:reverberation}
 
-This section focuses on a formal definition of reverberation and provides some intuition why reverberation makes Automated Speech Recognition difficult. We give a very brief introduction to signal processing and system theory, according to the book \cite{leon2015signale}.
+This section focuses on a formal definition of reverberation and provides some intuition why reverberation makes automatic speech recognition difficult. Reverberation should not be confused with echo: Reverberation overlays a signal with many reflections in a relatively short time context, while echo refers to few reflections that happen up to several seconds from each other. We also give a very brief introduction to signal processing and system theory, according to the book \cite{leon2015signale}.
 
 \subsection{Continuous Signals and Systems}
 
-Sound can, as any other continuous \textit{signal}, be described as a continous function $y(t)$ where $t$ indicates the time. In literature, the argument $t$ is often dropped  when not explicitly needed to make equations easier to read.  
+Sound can, as any other continuous \textit{signal}, be described as a continuous function $y(t)$ where $t$ indicates the time. In literature, the argument $t$ is often dropped  when not explicitly needed to make equations easier to read.  
 Signals can be fed into \textit{systems}, which in turn creates an output signal. In the context of this work, we only consider linear, time invariant systems. 
 \\
 Let $S$ be a linear time invariant system, $y_1$, $y_2$ continuous signals, and $c_1$, $c_2$ constants. The following three properties hold if and only if a given system is an linear time invariant system: 
@@ -93,11 +93,11 @@ x(t) = S\{y(t)\} = (y * g)(t)
 
 \subsection{Properties of Reverberation}
 
-The acoustic properties of a room can be approximated as a linear time invariant system \cite{yoshioka2012making}. The properties of this system are dependent on the properties of the room itself, for example the shape, size and surface of the wall, as well as the location of the sound source and the location of the receiver. Especially regarding automated speech recognition, \cite{ritter2016training} gives results that show that the location of a speaker relative to the microphone can have a very large impact on recognition results.
+The acoustic properties of a room can be approximated as a linear time invariant system \cite{yoshioka2012making}. The properties of this system are dependent on the properties of the room itself, for example the shape, size and surface of the wall, as well as the location of the sound source and the location of the receiver. Especially regarding automatic speech recognition, \cite{ritter2016training} gives results that show that the location of a speaker relative to the microphone can have a very large impact on recognition results.
 
 The measured impulse response of a real reverberation can be seen in figure \ref{fig:air_rir}. This specific sample is taken from the Aachen Impulse Response database \cite{jeub2009binaural}. Such a sample can be created by creating a very brief sound impulse, for example a clap, in an otherwise silent room, and then recording the sound for a few seconds. 
 
-As described in \cite{yoshioka2012making}, we can divide the impulse response into the direct transmitted sound itself, early reflections, and late reverberation. The intuition behind is that the original sound wave arrives at the receiver first. After that, reflections of the signal which were reflected once by the walls of the room arrive. These reflections are already dampened significantly. Then, reflections of reflections will be received, and so on, until the sound waves become so weak that the room is silent again. 
+As described in \cite{yoshioka2012making}, we can divide the impulse response of a reverberation into the direct transmitted sound itself, early reflections, and late reverberation. The intuition behind is that the original sound wave arrives at the receiver first. After that, reflections of the signal which were reflected once by the walls of the room arrive. These reflections are already dampened significantly. Then, reflections of reflections will be received, and so on, until the sound waves become so weak that the room is silent again. 
 \\ \\
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
@@ -119,7 +119,7 @@ As described in \cite{yoshioka2012making}, we can divide the impulse response in
 
 It is important to note that late reverberations can be measurable for several hundred milliseconds.\\\\
 
-To illustrate the impact of reflection and reverberation in a more formal way, we can use the decomposition into direct transmitted sound, early reflection, and late reverberation. We define a approximation of a room impulse response that subsequently overlays an audio signal with weaker copies of itself.
+To illustrate the impact of reverberation in a more formal way, we can use the decomposition into direct transmitted sound, early reflection, and late reverberation. We define a approximation of a room impulse response that subsequently overlays an audio signal with weaker copies of itself.
 
 \[
 g_{rir}(t) = w_0 \delta(t) + \sum_{1}^{n} w_n * \delta(t - t_n)
@@ -140,7 +140,7 @@ If the room impulse response is non-zero over at a certain time interval $t_n$, 
 
 \subsection{Impact of Reverberation on Digital Audio Samples}
 
-Before formally introducing automated speech recognition during a later chapter, we want to show that the impact of reverberation can be significant for many applications that process sound or speech.\\ \\
+Before formally introducing automatic speech recognition during a later chapter, we want to show that the impact of reverberation can be significant for many applications that process sound or speech.\\ \\
 Before a signal can be processed on a computer, it has to be measured. This process is called \textit{sampling}. Formally, we can describe sampling as the following operation, where $t_A$ is called the sampling interval. We call $y_{digital}$ a discrete signal: 
 
 \[
@@ -175,7 +175,7 @@ Y(n, \omega) = \sum_{m = -\infty}^{\infty} w_0 y(mt_A) \sigma((n - m)t_A) e^{-j 
 
 Equation \ref{eq:stftnoise} shows that, for sufficiently large $t_n$ and $w_n$, significant noise is added to neighboring time windows. To recapitulate from the last chapter, the $t_n$ for a large room can be up to several tenths of seconds, while the window size for most applications is in the hundreds of milliseconds. 
 \\ \\
-This mathematic observation shall serve as a motivation for this work. Reverberation, especially late reverberation can be a hard problem that significantly distorts measurements of signals. To cope with reverberation, our application has to consider large time windows in the first place. Time delay neural networks, which are introduced in section \ref{sec:tdnn} can naturally deal with a such wide windows in a stable way. 
+This mathematic observation shall serve as a motivation for this work. Reverberation, especially late reverberation can be a hard problem that significantly distorts measurements of signals. To cope with reverberation, applications can consider large time windows in the first place. Time delay neural networks, which are introduced in section \ref{sec:tdnn} can naturally deal with a such wide windows in a stable way. 
 \\ \\
 We conclude this explanation with a more visual example. Figure \ref{fig:air_spectrogram} shows the magnitude of the short term fourier transformation for a short speech segment, as well as the short term fourier transformation for the same speech segment after it has been reverberated using the impulse response shown in Figure \ref{fig:air_rir}. Such a magnitude representation is also called \textit{spectrogram} in literature. 
 
@@ -183,13 +183,13 @@ We conclude this explanation with a more visual example. Figure \ref{fig:air_spe
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
 		\begin{tikzpicture}
-		\begin{axis}[xlabel=Time, ylabel=Frequency, ytick=\empty, width= .50\textwidth, axis line style={draw=none}, axis x line*=bottom]
+		\begin{axis}[xlabel=Time (Seconds), ylabel=Frequency, ytick=\empty, width= .50\textwidth, axis line style={draw=none}, axis x line*=bottom]
 		\addplot [] 
 		graphics[xmin=0,xmax=3,ymin=0,ymax=1] {images/abc_spectrogram.png};
 		\end{axis}
 		\end{tikzpicture}
 		\begin{tikzpicture}
-		\begin{axis}[xlabel=Time, ylabel=\empty, ytick=\empty, width= .50\textwidth, axis line style={draw=none}, axis x line*=bottom]
+		\begin{axis}[xlabel=Time (Seconds), ylabel=\empty, ytick=\empty, width= .50\textwidth, axis line style={draw=none}, axis x line*=bottom]
 		\addplot [] 
 		graphics[xmin=0,xmax=3,ymin=0,ymax=1] {images/abc_noise_spectrogram.png};
 		\end{axis}
@@ -202,16 +202,16 @@ We conclude this explanation with a more visual example. Figure \ref{fig:air_spe
 
 \section{Hidden Markov Models}
 \label{sec:hmm}
-A \textit{Hiddem Markiv Model} (\textit{HMM}) is a discriminative model. Understanding hidden markov models throughly is fundamental for understanding automated speech recognition systems that build upon hidden markov models. 
+A \textit{Hidden Markov Model} (\textit{HMM}) is a discriminative model. Understanding hidden Markov models throughly is fundamental for understanding automatic speech recognition systems that build upon hidden Markov models. 
 
-To explain hidden markov models, we first introduce the concept of a \textit{markov chain}. A markov chain is a sequence of random variables $X = x_1, x_2, \dots. x_{t - 1}, x_{t} \dots, x_T$ and a finite number of states $s_1, \dots, s_n$, where the probability of entering a certain state at time $t + 1$ only depends on the state at time $t$:
+To explain hidden Markov models, we first introduce the concept of a \textit{Markov chain}. A Markov chain is a sequence of random variables $X = x_1, x_2, \dots. x_{t - 1}, x_{t} \dots, x_T$ and a finite number of states $s_1, \dots, s_n$, where the probability of entering a certain state at time $t + 1$ only depends on the state at time $t$:
 
 \[
 P(x_{t + 1} = s_{j_{t + 1}} | x_{t} = s_{j_t}, x_{t - 1} = s_{j_{t - 1}} \dots, x_{1} = s_{j_{1}}) = P(x_{t + 1} = s_{j_{t + 1}} | x_{t} = s_{j_t})
 \] 
 
-This assumption is also called the \textit{markov assumption}. If the probability of moving from state $s_{j_t}$ to state $s_{j_{t + 1}}$ is independent of the current time $t$, we call a markov chain \textit{homogeneous}. \\ \\
-We now extend our homogeneous markov chain and assume that we can no longer observe the state $s_{j_t}$ at a given time $t$ directly, but a symbol $v_k$ that was emitted. We formally define: 
+This assumption is also called the \textit{Markov assumption}. If the probability of moving from state $s_{j_t}$ to state $s_{j_{t + 1}}$ is independent of the current time $t$, we call a Markov chain \textit{homogeneous}. \\ \\
+We now extend our homogeneous Markov chain and assume that we can no longer observe the state $s_{j_t}$ at a given time $t$ directly, but a symbol $v_k$ that was emitted. We formally define: 
 \begin{align*}
 S &= \{s_1, \dots, s_n\} \tag{states} \\
 V &= \{v_1, \dots, v_m\} \tag{symbols} \\
@@ -223,7 +223,7 @@ b_j(k) &= p(v_k | x_t = s_j) \\
 \pi_i &= p(x_1 = s_i)
 \end{align*}
 
-The tuple $\lambda = (S, V, A, B, \pi)$ specifies a \textit{hidden markov model}. We furthermore introduce the graphical notation for hidden markov models seen in figure \ref{fig:hmm}. Unspecified transitions and observations have probability zero. \\ 
+The tuple $\lambda = (S, V, A, B, \pi)$ specifies a \textit{hidden Markov model}. We furthermore introduce the graphical notation for hidden Markov models seen in figure \ref{fig:hmm}. Unspecified transitions and observations have probability zero. \\ 
 
 \begin{minipage}{\linewidth}
 	\makebox[\linewidth]{
@@ -248,13 +248,13 @@ The tuple $\lambda = (S, V, A, B, \pi)$ specifies a \textit{hidden markov model}
 		edge [lightedge] node[auto,swap] {$b_3(2)$} (s3);
 		\end{tikzpicture}
 	}
-	\captionof{figure}{Graphical example of a hidden markov model with three states and two observations}
+	\captionof{figure}{Graphical example of a hidden Markov model with three states and two observations}
 	\label{fig:hmm}
 	\hspace{1cm}
 \end{minipage}
 
-\subsection{Forward and Backward algorithm}
-Given a sequence of observed emissions, a so called observation $O = \{o_1, \dots, o_t\}$, a hidden markov model can be used to evaluate the probability of the observation, given the parameters $p(O, \lambda)$. For calculating this joint probability, the \textit{forward algorithm} or the \textit{backward algorithm} can be used used. For the forward algorithm, let $\alpha_T(j)$ be the probability of having observed $O$ and being in state $s_j$ at the end of the observation. We define recursively for any previous time $t$:
+\subsection{Forward and Backward Algorithm}
+Given a sequence of observed emissions, a so called observation $O = \{o_1, \dots, o_t\}$, a hidden Markov model can be used to evaluate the probability $p(O, \lambda)$ of the observation, given the parameters. For calculating this joint probability, the \textit{forward algorithm} or the \textit{backward algorithm} is used. For the forward algorithm, let $\alpha_T(j)$ be the probability of having observed $O$ and being in state $s_j$ at the end of the observation. We define recursively for any previous time $t$:
 \begin{align*}
 \alpha_1(j) &= \pi_j b_j(o_1) \\
 \alpha_t(j) &= b_j(o_t) \sum_{i = 1}^{N} a_{ij}\alpha_{t-1}(i) \\
@@ -266,9 +266,9 @@ For the backward algorithm, we define a similar recursive algorithm, starting fr
 \beta_t(j) &= \sum_{i = 1}^{N} a_{ij}b_j(o_{t+1}) \beta_{t+1}(i) \\
 p(O|\lambda) &= \sum_{j = 1}^{N} \beta_0(j)
 \end{align*}
-\subsection{Decoding Problem}
+\subsection{The Decoding Problem}
 \label{sec:hmm_viterbi}
-Besides calculating the probability of an observation sequence, finding the most likely state sequence $X = \{X_1, X_2, \dots, X_T\}$ given an observation $O$ and a hidden markov model $\lambda$ is also of interest. 
+Besides calculating the probability of an observation sequence, finding the most likely state sequence $X = \{X_1, X_2, \dots, X_T\}$ given an observation $O$ and a hidden Markov model $\lambda$ is of interest for automatic speech recognition, as we will explain in section \ref{sec:asr_decoding}. 
 This problem is called the \textit{decoding problem}, which is solved by the \textit{viterbi algorithm}. The viterbi algorithm is very similar to the forward algorithm. The main difference is that we search for the maximum probability in each step instead of calculating the sum: \\
 \begin{align*}
 \delta_(j) &= \pi_j b_j(o_1) \\
@@ -278,7 +278,7 @@ This problem is called the \textit{decoding problem}, which is solved by the \te
 The path with the highest probability can be found by starting at the highest $\delta_T$ for the last time step, and then tracing the assigned maximum predecessors backwards using $\mathcal{T}$.
 \subsection{Learning Hidden Markov Model Parameters}
 \label{sec:learning_hmm}
-Given a hidden markov model topology, which is essentially only the number of states $n$ and the number of emission symbols $m$, as well as a training set of observations $O$, we can use the so called \textit{Baum-Welch} algorithm to optimize the initial state probabilities $\pi$, transmission probabilities $A$ and emission probabilities $B$. \\ \\
+Given a hidden Markov model topology, which is essentially only the number of states $n$ and the number of emission symbols $m$, as well as a training set of observations $O$, we can use the so called \textit{Baum-Welch} algorithm to optimize the initial state probabilities $\pi$, transmission probabilities $A$ and emission probabilities $B$. \\ \\
 We first define two auxiliary variables, given an observation $O$ and the parameters $\lambda$: $\gamma_t(i)$, the probability of being in state $i$ at time $t$ and $\xi_t(i, j)$, the probability of being in state $i$ at time $t$ and state $j$ at time $t + 1$.
 
 \begin{minipage}{0.45\textwidth}
@@ -304,4 +304,4 @@ b^*_j(k) &= \frac{\sum_{t = 1, o_t = v_k}^{T} \gamma_t(j)}{\sum_{t = 1}^{T} \gam
 a_{ij}^*  &= \frac{\sum_{t = 1}^{T} \xi_t(i, j)}{\sum_{t = 1}^{T} \gamma_t(j)} 
 \end{align*}
 
-It should be noted that the Baum-Welch algorithm is a special case of the \textit{expected maximization} {\textit{EM}} algorithm applied to hidden markov models. The expected maximization algorithm gives a maximum-likelihood estimate of parameters, even if the data set used for the estimation has incomplete or missing values. A proof can be found in \cite{bilmes1998gentle}. 
+It should be noted that the Baum-Welch algorithm is a special case of the \textit{expected maximization} (\textit{EM}) algorithm applied to hidden Markov models. The expected maximization algorithm gives a maximum-likelihood estimate of parameters, even if the data set used for the estimation has incomplete or missing values. A proof can be found in \cite{bilmes1998gentle}. 

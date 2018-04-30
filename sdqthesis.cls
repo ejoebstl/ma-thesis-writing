@@ -174,6 +174,7 @@
 
 \newcommand{\abstract}[1][\abstractname]{\chapter*{#1}}
 \newcommand{\Abstract}[1][\abstractname]{\chapter*{#1}\addcontentsline{toc}{chapter}{#1}}
+\newcommand{\acks}[1][\ackname]{\chapter*{#1}}
 
 \def\ackname{Acknowledgments}
 \def\abstractname{Abstract}
@@ -189,10 +190,13 @@
 %% In English theses, an additional German Abstract is needed.
 \newcommand{\includeabstract}{
 \ifcurrentbaselanguage{English}{
+\input{sections/acknowledgements_en.tex}
 % include English and German abstracts
 \input{sections/abstract_en.tex}
 \begin{otherlanguage}{ngerman}
+\selectlanguage{ngerman}
 \input{sections/abstract_de.tex}
+\selectlanguage{english}
 \end{otherlanguage}
 }{
 % include only German abstract
