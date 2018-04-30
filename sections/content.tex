@@ -16,7 +16,7 @@ Our approach for creating a robust TDNN acoustic model is to find a TDNN model t
 \section{Training Data and System Setup}
 All experiments in this work only concern the neural network part of our acoustic model, which is a HMM/TDNN hybrid. The speech recognition system itself, as well as all data, the HMM part of the acoustic model, the dictionary and the language model, are based upon the system described in \cite{nguyen20162016}. The system is built upon the Janus recognition toolkit \cite{finke1997karlsruhe}. We utilize a four-gram language model and the CMU Pronouncing Dictionary \cite{cmudict}, which uses 39 phones. The acoustic model uses quinphones and has 8156 different distributions, which means that the HMM part of our acoustic model has 8156 different states. \\ \\
 The training and test dataset for the acoustic model consist of 468 hours of English speech from the TED-LIUM v2 \cite{rousseau2014enhancing}, Broadcast News \cite{graff19971996} and Quaero 2010-2012 datasets. From these 468~hours, 17~hours are randomly selected as test set, 451~hours are used for the training set. \\ \\
-The development dataset, used for tuning the decoder parameters, consists of the english IWSLT 2013 evaluation dataset for the ASR track \cite{cettolo2013report}. This dataset consists of 3.9~hours of TED talks. The word error rates for all experiments in this chapter were measured on this development set. \\ \\ 
+The development dataset, used for tuning the hyperparameters, consists of the english IWSLT 2013 evaluation dataset for the ASR track \cite{cettolo2013report}. This dataset consists of 3.9~hours of TED talks. The word error rates for all experiments in this chapter were measured on this development set. \\ \\ 
 Each frame of samples in the datasets consists of 40~log-mel features which were normalized over the whole utterance to have mean zero and variance two. Each frame covers 32~milliseconds. The frame shift between successive frames is 10~milliseconds. The sampling rate of the audio data was 16~kHz. \\ \\
 The neural network training was done using a custom framework, build on top of PyTorch \cite{paszke2017automatic}. Pytorch is a machine learning framework that supports GPU accelleration, parallelization along multiple systems and automatic differentiation. In the context of this work, several contributions were made to the PyTorch framework.  
 \section{Neural Network Parameters}
@@ -66,7 +66,7 @@ Figure \ref{fig:tdnn_layer_design} shows the word error rate for the two differe
 \end{minipage} 
 \subsection{Nonlinearity}
 \label{sec:tdnn_nonlin}
-Following \cite{zhang2014improving}, we tested L2 pooling nonlinearity with group size if ten after each TDNN layer. Using the L2 norm can be problematic, as the gradient is not defined when all inputs in the pooling group are zero. The authors of \cite{zhang2014improving} propose to use a modified batch normalization layer after each LP-pooling layer, which solves the problem. We propose an alternate approach, which is setting the gradient to zero if all inputs become zero. Furthermore, we also tested max pooling as a possible nonlinearity. All experiments were conducted on the four-layer architecture described before. Figure \ref{fig:tdnn_nonlinearity} shows the results. \\ \\
+Following \cite{zhang2014improving}, we tested a L2 pooling nonlinearity with group size if ten after each TDNN layer. Using the L2 norm can be problematic, as the gradient is not defined when all inputs in the pooling group are zero. The authors of \cite{zhang2014improving} propose to use a modified batch normalization layer after each L2 pooling layer, which solves the problem. We propose an alternate approach, which is setting the gradient to zero if all inputs become zero. Furthermore, we also tested max pooling as a possible nonlinearity. All experiments were conducted on the four-layer architecture described before. Figure \ref{fig:tdnn_nonlinearity} shows the results. \\ \\
 \begin{minipage}{\linewidth}
 	\centering
 	\begin{tikzpicture}
@@ -89,8 +89,8 @@ Following \cite{zhang2014improving}, we tested L2 pooling nonlinearity with grou
 In our case, the usage of L2 pooling with a modified gradient outperformed the other nonlinearities. It was not possible to compare L2 pooling without any modifications, as our training became unstable. 
 \section{Training Setup}
 This section is focused on the training setup for our acoustic model. Out setup is closely related to the setup described in \cite{nguyen20162016}. We essentially use the same speech recognition system, the same labels, as well as the same samples for training our acoustic model.
-\subsection{Shuffling and Preparation of Dataset}
-For our experiments, we benchmarked different shuffling strategies with a six-layer fully connected network. Shuffling of the whole dataset once before training, and shuffling of the whole dataset before each epoch. The results can be seen in figure \ref{fig:tdnn_shuffling}. \\ \\
+\subsection{Shuffling of Dataset}
+For our experiments, we benchmarked two different shuffling strategies with a six-layer fully connected network: Shuffling of the whole dataset once before training, and shuffling of the whole dataset before each epoch. The results can be seen in figure \ref{fig:tdnn_shuffling}. \\ \\
 \begin{minipage}{\linewidth}
 	\centering
 	\begin{tikzpicture}
@@ -107,9 +107,9 @@ For our experiments, we benchmarked different shuffling strategies with a six-la
 	\captionof{figure}{Word Error Rate for different shuffling strategies}
 	\label{fig:tdnn_shuffling}
 \end{minipage} \\ \\
-We can see that shuffling of the training dataset before each epoch decreased the word error rate. \\
+We can see that shuffling the training dataset before each epoch decreased the word error rate. \\
 \subsection{Learning Rate and Learning Rate Decay}
-As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for training for stochastic gradient descend, with an initial learning rate of $0.08$ and a momentum of $5$. The SGD variant used is the introduced in section \ref{sec:momentum}, as this was also used in \cite{nguyen20162016}\footnote{This SGD variant is not equal to the default SGD variant implemented in pytorch.}. Figure \ref{fig:newbob_wer} shows the word error rate per epoch when using newbob. It can be seen that there were almost no improvements during epoch four, but the word error rate improved as soon as the decaying started after epoch four. Figure \ref{fig:newbob_fer} shows the frame error rate per epoch for the same training run. It can be seen that exponential decay reduces the frame error rate significantly. The model used for this experiment was the four layer TDNN introduced in the previous section.
+As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for stochastic gradient descend training. We used an initial learning rate of $0.08$ and a momentum of $5$. The SGD variant\footnote{The SGD variant is not equal to the default SGD variant implemented in PyTorch.} used is the variant introduced in section \ref{sec:momentum}, as this was also used in \cite{nguyen20162016}. Figure \ref{fig:newbob_wer} shows the word error rate per epoch when using newbob. It can be seen that there were almost no improvements during epoch four, but the word error rate improved as soon as the decaying started after epoch four. Figure \ref{fig:newbob_fer} shows the frame error rate per epoch for the same training run. It can be seen that exponential decay reduces the frame error rate significantly. The model used for this experiment was the four layer TDNN introduced in the previous section.
 \\ \\
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
@@ -137,7 +137,7 @@ As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for t
 	\captionof{figure}{Word Error Rate per Epoch when using newbob training. The exponential decaying of the learning rate started after epoch four.}
 	\label{fig:newbob_wer}
 \end{minipage}
- \\ \\
+ \\ \\ \\ \\
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
 	\begin{axis}[ylabel=Frame Error Rate, xlabel=Epoch, height=6cm, 
