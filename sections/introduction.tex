@@ -254,7 +254,7 @@ The tuple $\lambda = (S, V, A, B, \pi)$ specifies a \textit{hidden Markov model}
 \end{minipage}
 
 \subsection{Forward and Backward Algorithm}
-Given a sequence of observed emissions, a so called observation $O = \{o_1, \dots, o_t\}$, a hidden Markov model can be used to evaluate the probability $p(O, \lambda)$ of the observation, given the parameters. For calculating this joint probability, the \textit{forward algorithm} or the \textit{backward algorithm} is used. For the forward algorithm, let $\alpha_T(j)$ be the probability of having observed $O$ and being in state $s_j$ at the end of the observation. We define recursively for any previous time $t$:
+Given a sequence of observed emissions, a so called observation $O = \{o_1, \dots, o_t\}$, a hidden Markov model can be used to evaluate the probability $p(O, \lambda)$ of the observation, given the parameters $\lambda$. For calculating this joint probability, the \textit{forward algorithm} or the \textit{backward algorithm} is used. For the forward algorithm, let $\alpha_T(j)$ be the probability of having observed $O$ and being in state $s_j$ at the end of the observation. We define recursively for any previous time $t$:
 \begin{align*}
 \alpha_1(j) &= \pi_j b_j(o_1) \\
 \alpha_t(j) &= b_j(o_t) \sum_{i = 1}^{N} a_{ij}\alpha_{t-1}(i) \\

@@ -1,5 +1,5 @@
 \section{Acoustic Modeling using Neural Networks}
-
+\label{sec:nn_am}
 As mentioned in section \ref{sec:acoustic_model}, acoustic models combine a discriminative classification algorithm with a hidden Markov model. Neural networks can be used as such a discriminative classification algorithm. A neural network can be used to directly predict the likelihood of a state $s_i$ of the hidden Markov model $p(x|s_i)$ given a feature $x$. In this context, we call the states \textit{labels} and the features \textit{samples}. This approach makes our model essentially a Markov chain, since the states are now assumed to be directly observable. In \cite{hinton2012deep}, an excellent summary of the approach is given, although first experiments with neural network based acoustic modeling already happened significantly earlier \cite{bengio1993connectionist}. Notably, recent advancements were with robust acoustic modeling using a TDNN by Peddinti et al. \cite{peddinti2015reverberation} \cite{peddinti2015jhu}. Their experiments have shown that an acoustic model based on a TDNN was significantly better for reverberated speech than a acoustic model based on a fully connected network, when trained on reverberated data. \\ \\
 We will now introduce three loss functions that are used in the field of automatic speech recognition. Since neural network training is based on gradient descend, will also show how we can derive gradients from the given loss functions. Brief versions of this derivations can be found in \cite{ghoshal2013sequence}, very detailed analysis of the loss functions in the context of ASR can be found in \cite{gibson2008minimum} and \cite{povey2005discriminative}.
 \subsection{Maximum Likelihood Estimation}
@@ -99,10 +99,11 @@ Now, we differentiate, factor out the first fraction and cancel the last fractio
 \end{align*}
 We now use $\gamma_t(t)$ like before and introduce two new symbols to simplify the equation.
 \[
-\frac{\partial\mathcal{L}_{\text{OCRE}}}{\partial p^*_{s_{j,t}}} = \frac{1}{p^*_{s_{j,t}}} \gamma_t(j) \left[ \overline{\lambda}(U, V) - \overline{\lambda}(U, V|s_{j,t})) \right]
+\frac{\partial\mathcal{L}_{\text{OCRE}}}{\partial p^*_{s_{j,t}}} = \frac{\gamma_t(j)}{p^*_{s_{j,t}}}  \left[ \overline{\lambda}(U, V) - \overline{\lambda}(U, V|s_{j,t})) \right]
 \]
 $\overline{\lambda}(U, V)$ is the average raw accuracy for all sequences, weighted by the probability of each sequence. $\overline{\lambda}(U, V|s_{j,t})$ is the average raw accuracy for all sequences that pass through state $j$ at time $t$, also weighted by the probability of each sequence. \\ \\
 Again, in \cite{ghoshal2013sequence}, a variant of this gradient is defined: 
 \[
 \frac{\partial\mathcal{L}_{\text{OCRE}}}{\partial p^*_{s_{j,t}}} \approx \frac{\gamma_t(j)}{\kappa} \left[ \overline{\lambda}(U, V) - \overline{\lambda}(U, V|s_{j,t})) \right]
 \]
+Where $\kappa$ is an acoustic scaling factor, like before. 

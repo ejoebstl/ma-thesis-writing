@@ -13,10 +13,22 @@
 
 \chapter{Appendix}
 \label{ch:appendix}
-The appendix will contain information that might be useful for readers but 
-does not fit anywhere else:
-\begin{itemize}
-  \item Practical pitfalls during training
-  \item Implementation details
-  \item If applicable, raw result data
-\end{itemize}
+\section{Optimal Decoder Parameters}
+The following table contains a summary of all decoder parameters we found to be optimal for the experiments in our evaluation. This might be useful for reproducing our results or for further experiments. The table also shows the achieved word error rate on the clean and reverberated development data set. \\ \\ 
+\begin{minipage}{\linewidth}
+	\centering
+	\begin{tabular}{@{\extracolsep{4pt}}lcccclll@{}}
+		\toprule
+		Model Name      & Training Data & $l_p$ & $l_z$ & $mb$ &  $1/\tau$ & clean WER & rvb WER \\\cmidrule[1pt]{1-1}\cmidrule[1pt]{2-8}
+		TDNN $(-13, 9)$ & clean         & -15   & 95    & 6     & 0.9       & 14.9 & TODO\\
+		FC $(-13, 9)$   & clean         & -10   & 90    & 6     & 0.8       & 15.1 & 28.4 \\
+		FC $(-5, 5)$    & clean         & -10   & 90    & 6     & 0.8       & 15.3 & 35.5 \\\midrule
+		TDNN $(-13, 9)$ & clean + rvb   & -5    & 95    & 6     & 0.85      & 14.8 & 20.4 \\
+		FC $(-13, 9)$   & clean + rvb   & -10   & 90    & 6     & 0.78      & 14.7 & 19.8 \\
+		FC $(-5, 5)$    & clean + rvb   & -10   & 95    & 6     & 1.0       & 14.6 & 20.3\\
+		\bottomrule
+	\end{tabular}
+	\captionof{table}{Optimal decoder parameters and word error rate on clean and reverberated development data set}
+	\label{tbl:decoder_params}
+\end{minipage} \\ \\
+It should be noted that the parameters shown here are implementation specific to the Janus recognition toolkit \cite{finke1997karlsruhe}.

@@ -298,8 +298,8 @@ Our experiments have shown that the $l_p$ and $l_z$ parameters are depending on 
 \begin{minipage}{\linewidth}
 \centering
 \begin{tikzpicture}
-\begin{axis}[grid=both,zlabel=Word Error Rate,xlabel=$l_p$,ylabel=$l_z$,width=0.7\linewidth]
-	\addplot3[surf,mesh/cols=10,z buffer=sort] file {data/lp_lz_i12};
+\begin{axis}[grid=both,zlabel=Word Error Rate,xlabel=$l_p$,ylabel=$l_z$,width=0.7\linewidth, point meta min=17, point meta max=30]
+	\addplot3[surf,mesh/cols=10,z buffer=sort,colormap/violet] file {data/lp_lz_i12};
 \end{axis}
 \end{tikzpicture}
 \captionof{figure}{Illustrative example of the word error rate for different $l_p$ and $l_z$ parameters for a four-layer TDNN}

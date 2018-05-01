@@ -40,7 +40,7 @@ Figure \ref{fig:tiny_tdnn} shows a tiny TDNN model in the time domain. Our input
 	\vspace{5mm}
 	\begin{tikzpicture}[x=1.8cm, y=1.5cm]
 	% Layers
-	\node[text width=3cm] at (-1,0) {Input ($21*40$)};
+	\node[text width=3cm] at (-1,0) {Input ($21\times40$)};
 	\foreach \m in {2,3,...,20}
 	\node [tdnn neuron] (input-\m) at (\m*0.25,0) {};
 	
@@ -48,12 +48,12 @@ Figure \ref{fig:tiny_tdnn} shows a tiny TDNN model in the time domain. Our input
 	\node [tdnn neuron, label=below:$x_{t + 10}$] (input-21) at (21*0.25,0) {};
 	
 	\node[text width=3cm] at (-1,0.5) {TDNN/LP 1};
-	\node[text width=3cm] at (-1,1) {Hidden ($5*8$)};
+	\node[text width=3cm] at (-1,1) {Hidden ($5\times8$)};
 	\foreach \m [count=\y] in {1,2,...,5}
 	\node [tdnn neuron] (hidden-1-\m) at (\y*0.25*4 - 0.25,1) {};
 	
 	\node[text width=3cm] at (-1,1.5) {TDNN/LP 2};
-	\node[text width=3cm] at (-1,2) {Output ($1*6$)};
+	\node[text width=3cm] at (-1,2) {Output ($1\times6$)};
 	\node [tdnn neuron, label=above:$y_{t}$] (classify-1) at (1*0.25 + 10 * 0.25,2) {};
 	
 	%Edges
