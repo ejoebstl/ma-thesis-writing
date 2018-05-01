@@ -61,7 +61,7 @@ Figure \ref{fig:tdnn_layer_design} shows the word error rate for the two differe
 	\addlegendentry{5 Layer};
 	\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Word Error Rate for different choices of layer and channel count}
+	\captionof{figure}{Word error rate for different choices of layer and channel count}
 	\label{fig:tdnn_layer_design}
 \end{minipage} 
 \subsection{Nonlinearity}
@@ -83,7 +83,7 @@ Following \cite{zhang2014improving}, we tested a L2 pooling nonlinearity with gr
 		(16.6,L2/BatchNorm)};
 		\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Word Error Rate for different choices of nonlinearities}
+	\captionof{figure}{Word error rate for different choices of nonlinearities}
 	\label{fig:tdnn_nonlinearity}
 \end{minipage} \\ \\
 In our case, the usage of L2 pooling with a modified gradient outperformed the other nonlinearities. It was not possible to compare L2 pooling without any modifications, as our training became unstable. 
@@ -104,7 +104,7 @@ For our experiments, we benchmarked two different shuffling strategies with a si
 	\addplot coordinates {(15.9,Once) (15.3,Each Epoch)};
 	\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Word Error Rate for different shuffling strategies}
+	\captionof{figure}{Word error rate for different shuffling strategies}
 	\label{fig:tdnn_shuffling}
 \end{minipage} \\ \\
 We can see that shuffling the training dataset before each epoch decreased the word error rate. \\
@@ -134,7 +134,7 @@ As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for s
 	\addlegendentry{4 Layer};
 	\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Word Error Rate per Epoch when using newbob training. The exponential decaying of the learning rate started after epoch four.}
+	\captionof{figure}{Word error rate per epoch when using newbob training. The exponential decaying of the learning rate started after epoch four.}
 	\label{fig:newbob_wer}
 \end{minipage}
  \\ \\ \\ \\
@@ -179,11 +179,11 @@ As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for s
 	\addlegendentry{Test};
 	\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Frame Error Rate per Epoch when using newbob training. The exponential decaying of the learning rate started after epoch four.}
+	\captionof{figure}{Frame error rate per epoch when using newbob training. The exponential decaying of the learning rate started after epoch four.}
 	\label{fig:newbob_fer}
 \end{minipage}
 \subsection{MMIE Training}
-Since the experiments described in \cite{peddinti2015jhu} show improvement when sMBR discriminative training is used, we attempted to use discriminative based training as well. Our implementation used maximum mutual information estimation, as described in section \ref{sec:mmie}. We picked this training variant as a first step, since it is easier to implement than any variant of overall risk criterion estimation. Both approaches should show some improvement over cross entropy loss on frame level, according to several bodies of work \cite{povey2005discriminative} \cite{ghoshal2013sequence}. \\ \\
+Since the experiments described in \cite{peddinti2015jhu} show improvement when sMBR discriminative training is used, we attempted to use discriminative training as well. Our implementation used maximum mutual information estimation (MMIE), as described in section \ref{sec:mmie}. We picked this training variant as a first step, since it is easier to implement than any variant of overall risk criterion estimation. Both approaches should show some improvement over cross entropy loss on frame level, according to several bodies of work \cite{povey2005discriminative} \cite{ghoshal2013sequence}. \\ \\
 For MMIE training, we pre-trained a four layer TDNN acoustic model with frame-based cross entropy loss for a single epoch. Then, we started MMIE training on a per-utterance basis. For this purpose, we wrote a module that enabled interoperability between the Janus recognition toolkit and PyTorch. The training was done on multiple machines with a total of 256 processors, the gradients were averaged before each SGD step. \\ \\
 While our experiments consistently showed high improvements in terms of frame error rate, the word error rate increased significantly: The model reached a WER of $17.6$ using cross entropy loss, but only a WER $25.6$ was reached after the MMIE training finished the first epoch. This effect was also described in more practically oriented literature \cite{su2013error} for MMIE without any further modifications. 
 
@@ -260,7 +260,7 @@ While our experiments consistently showed high improvements in terms of frame er
 	\end{axis}
 	\end{tikzpicture}
 \end{minipage}
-	\captionof{figure}{Frame Error Rate per Epoch when using cross entropy loss, as well as Frame Error Rate over a single epoch when using MMIE on a TDNN}
+	\captionof{figure}{Frame error rate per Epoch when using cross entropy loss, as well as frame error rate over a single epoch when using MMIE on a TDNN}
 	\label{fig:mmie_fer}
 \end{minipage} \\ \\
 Detailed results regarding the frame error rate are shown in figure \ref{fig:mmie_fer}. It can be seen that the MMIE training converged significantly faster than cross entropy training. Also, the error on the test data set is significantly closer to the error on the training data set. 
@@ -288,11 +288,11 @@ Detailed results regarding the frame error rate are shown in figure \ref{fig:mmi
 	\label{fig:mmie_fer_fc}
 \end{minipage}
 \fi
-\\ These results were achieved using the four-layer TDNN model. Caution has to be taken when interpreting the results: While the amount of data in both test data sets is the same, they are not equal as training and testing for MMIE happens on per-utterance basis, while the test and training sets for the cross entropy loss based training were created on per-frame basis. \\ \\
+\\ These results were achieved using the four-layer TDNN model. Caution has to be taken when interpreting the results: While the amount of data in both test data sets is the same, they are not equal as training and testing for MMIE happens on per-utterance basis, while the test and training sets for the cross entropy loss training were created on per-frame basis. \\ \\
 Although the results regarding frame error rate look interesting, we did not pursue this approach any further, due to the resulting high word-error rates and the numerous details one has to consider for working MMIE training on neural networks \cite{su2013error}.
 
 \section{Decoding Parameters}
-Tuning decoding parameters is important for good achieving a high accuracy on word level. The decoding parameters are not directly related to the acoustic model, but rather the decoding process. Different acoustic models might still require different decoding parameters for best performance. 
+Tuning decoding parameters is important for achieving a high accuracy on word level. The decoding parameters are not directly related to the acoustic model, but rather the decoding process. Different acoustic models might still require different decoding parameters for best performance. 
 \subsection{Acoustic Model Scaling and Length Penalty}
 Our experiments have shown that the $l_p$ and $l_z$ parameters are depending on each other. Therefore we can not optimize them separately. We choose to perform a grid search over a reasonable parameter space. \\ \\
 \begin{minipage}{\linewidth}
@@ -306,12 +306,12 @@ Our experiments have shown that the $l_p$ and $l_z$ parameters are depending on 
 \label{fig:lp_lz}
 \end{minipage}
 \\ \\
-An example impact of the $l_p$ and $l_z$ for two different models are illustrated in figure \ref{fig:lp_lz}. Our experiments have shown that the optimal parameters are similar for each of the models we tested. It is still advisable to fine tune the parameters for each model. Taking the initial values for the grid search from an similar model usually leads to good results.
+An example of the word error rate for different $l_p$ and $l_z$ for the four-layer TDNN model is illustrated in figure \ref{fig:lp_lz}. Our experiments have shown that the optimal parameters are similar for each of the models we tested. It is still advisable to fine tune the parameters for each model. Taking the initial values for a small grid search from a similar model usually leads to good results.
 \subsection{Master Beam}
-We tested several architectures with different master beams. Master beams between four and six appeared to work best, but we did not find any pattern that correlated with the network architecture. This indicates that the optimal master beam depends on several factors, not just on the architecture of the neural network model itself. 
+We tested several architectures with different master beams. Master beams between four and six appeared to work best, but we did not find any pattern that correlates with the network architecture. This indicates that the optimal master beam depends on several factors, not just on the architecture of the neural network model itself. 
 \subsection{Neural Network Priors}
 \label{sec:tdnn_prior}
-As described in section \ref{sec:ce_loss}, it is important to scale the posteriors generated by the neural network with priors. We tested two different approaches of generating the priors: Generating them from the complete test dataset and also generating them from the output of a trained model. In the second case, we selected thirty minutes of speech data randomly from our dataset, computed the neural network output on it, and counted the occurrence of each label in the output. \\ \\
+As described in section \ref{sec:ce_loss}, it is important to scale the posteriors generated by the neural network with priors. We tested two different approaches of generating the priors: Generating them from the complete test dataset and also generating them from the output of a trained model. In the second case, we selected 15~hours of speech data randomly from our dataset, computed the neural network output on it, and counted the occurrence of each label in the output. \\ \\
 \begin{minipage}{\linewidth}
 	\centering
 	\begin{tikzpicture}
@@ -325,13 +325,13 @@ As described in section \ref{sec:ce_loss}, it is important to scale the posterio
 	\addplot coordinates {(15.4,Dataset) (15.1,Output)};
 	\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Word Error Rate for priors estimated from the dataset and the model output}
+	\captionof{figure}{Word error rate for priors estimated from the dataset and the model output}
 	\label{fig:wer_priors}
 \end{minipage} 
-\\
+\\ \\
 As illustrated in figure \ref{fig:wer_priors}, calculating the priors from the output of the model decreased the word error rate significantly. These experiments were done on the four-layered TDNN model. 
 \subsection{Softmax Smoothing}
-We also tested the impact of softmax smoothing on the neural network output. The motivation is that a beam search through a hidden Markov model does not work very well when the acoustic model is overconfident regarding certain states. Figure \ref{fig:softmax_fer} shows that softmax smoothing decreased the word error rate for our four-layer TDNN model. \\ \\
+We also tested the impact of softmax smoothing on the neural network output. The motivation is that a beam search through a hidden Markov model does not work well when the acoustic model is overconfident regarding certain states. Figure \ref{fig:softmax_fer} shows that softmax smoothing decreased the word error rate for our four-layer TDNN model, when carefully tuned. \\ \\
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
 	\begin{axis}[ylabel=Word Error Rate, xlabel=Softmax Smoothing Factor $1/\tau$, height=6cm, 
@@ -351,7 +351,7 @@ We also tested the impact of softmax smoothing on the neural network output. The
 	};
 	\end{axis}
 	\end{tikzpicture}
-	\captionof{figure}{Word Error Rate per softmax adjustment $1/\tau$ for a four-layer TDNN model}
+	\captionof{figure}{Word error rate for different softmax adjustments $1/\tau$ for a four-layer TDNN model}
 	\label{fig:softmax_fer}
 \end{minipage} \\ \\
 
