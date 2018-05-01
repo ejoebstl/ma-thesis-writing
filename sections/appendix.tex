@@ -20,9 +20,9 @@ The following table contains a summary of all decoder parameters we found to be 
 	\begin{tabular}{@{\extracolsep{4pt}}lcccclll@{}}
 		\toprule
 		Model Name      & Training Data & $l_p$ & $l_z$ & $mb$ &  $1/\tau$ & clean WER & rvb WER \\\cmidrule[1pt]{1-1}\cmidrule[1pt]{2-8}
-		TDNN $(-13, 9)$ & clean         & -15   & 95    & 6     & 0.9       & 14.9 & TODO\\
+		TDNN $(-13, 9)$ & clean         & -15   & 95    & 6     & 0.9       & 14.9 & 27.6 \\
 		FC $(-13, 9)$   & clean         & -10   & 90    & 6     & 0.8       & 15.1 & 28.4 \\
-		FC $(-5, 5)$    & clean         & -10   & 90    & 6     & 0.8       & 15.3 & 35.5 \\\midrule
+		FC $(-5, 5)$    & clean         & -10   & 90    & 6     & 0.8       & 15.3 & 35.5  \\\cmidrule[1pt]{1-1}\cmidrule[1pt]{2-8}
 		TDNN $(-13, 9)$ & clean + rvb   & -5    & 95    & 6     & 0.85      & 14.8 & 20.4 \\
 		FC $(-13, 9)$   & clean + rvb   & -10   & 90    & 6     & 0.78      & 14.7 & 19.8 \\
 		FC $(-5, 5)$    & clean + rvb   & -10   & 95    & 6     & 1.0       & 14.6 & 20.3\\

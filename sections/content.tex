@@ -109,8 +109,9 @@ For our experiments, we benchmarked two different shuffling strategies with a si
 \end{minipage} \\ \\
 We can see that shuffling the training dataset before each epoch decreased the word error rate. \\
 \subsection{Learning Rate and Learning Rate Decay}
-As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for stochastic gradient descend training. We used an initial learning rate of $0.08$ and a momentum of $5$. The SGD variant\footnote{The SGD variant is not equal to the default SGD variant implemented in PyTorch.} used is the variant introduced in section \ref{sec:momentum}, as this was also used in \cite{nguyen20162016}. Figure \ref{fig:newbob_wer} shows the word error rate per epoch when using newbob. It can be seen that there were almost no improvements during epoch four, but the word error rate improved as soon as the decaying started after epoch four. Figure \ref{fig:newbob_fer} shows the frame error rate per epoch for the same training run. It can be seen that exponential decay reduces the frame error rate significantly. The model used for this experiment was the four layer TDNN introduced in the previous section.
+As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for stochastic gradient descend training. We used an initial learning rate of $0.08$ and a momentum of $5$. The SGD variant\footnote{The SGD variant is not equal to the default SGD variant implemented in PyTorch.} used is the variant introduced in section \ref{sec:momentum}. This variant was also used in  \cite{nguyen20162016}.
 \\ \\
+Figure \ref{fig:newbob_wer} shows the word error rate per epoch when using newbob. It can be seen that there were almost no improvements during epoch four, but the word error rate improved as soon as the decaying started after epoch four. Figure \ref{fig:newbob_fer} shows the frame error rate per epoch for the same training run. It can be seen that exponential decay reduces the frame error rate significantly. The model used for this experiment was the four layer TDNN introduced in the previous section. \\ \\
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
 	\begin{axis}[ylabel=Word Error Rate, xlabel=Epoch, height=6cm, 
@@ -137,7 +138,7 @@ As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for s
 	\captionof{figure}{Word error rate per epoch when using newbob training. The exponential decaying of the learning rate started after epoch four.}
 	\label{fig:newbob_wer}
 \end{minipage}
- \\ \\ \\ \\
+ \\ \\ \\ \\ 
 \begin{minipage}{\linewidth}
 	\begin{tikzpicture}
 	\begin{axis}[ylabel=Frame Error Rate, xlabel=Epoch, height=6cm, 
@@ -181,7 +182,7 @@ As in \cite{nguyen20162016}, we utilize the newbob learning rate scheduler for s
 	\end{tikzpicture}
 	\captionof{figure}{Frame error rate per epoch when using newbob training. The exponential decaying of the learning rate started after epoch four.}
 	\label{fig:newbob_fer}
-\end{minipage}
+\end{minipage}\\ \\
 \subsection{MMIE Training}
 Since the experiments described in \cite{peddinti2015jhu} show improvement when sMBR discriminative training is used, we attempted to use discriminative training as well. Our implementation used maximum mutual information estimation (MMIE), as described in section \ref{sec:mmie}. We picked this training variant as a first step, since it is easier to implement than any variant of overall risk criterion estimation. Both approaches should show some improvement over cross entropy loss on frame level, according to several bodies of work \cite{povey2005discriminative} \cite{ghoshal2013sequence}. \\ \\
 For MMIE training, we pre-trained a four layer TDNN acoustic model with frame-based cross entropy loss for a single epoch. Then, we started MMIE training on a per-utterance basis. For this purpose, we wrote a module that enabled interoperability between the Janus recognition toolkit and PyTorch. The training was done on multiple machines with a total of 256 processors, the gradients were averaged before each SGD step. \\ \\
@@ -288,7 +289,7 @@ Detailed results regarding the frame error rate are shown in figure \ref{fig:mmi
 	\label{fig:mmie_fer_fc}
 \end{minipage}
 \fi
-\\ These results were achieved using the four-layer TDNN model. Caution has to be taken when interpreting the results: While the amount of data in both test data sets is the same, they are not equal as training and testing for MMIE happens on per-utterance basis, while the test and training sets for the cross entropy loss training were created on per-frame basis. \\ \\
+\\ These results were achieved using the four-layer TDNN model. Caution has to be taken when comparing the results: While the amount of data in both test data sets is the same, they are not equal as training and testing for MMIE happens on per-utterance basis, while the test and training sets for the cross entropy loss training were created on per-frame basis. \\ \\
 Although the results regarding frame error rate look interesting, we did not pursue this approach any further, due to the resulting high word-error rates and the numerous details one has to consider for working MMIE training on neural networks \cite{su2013error}.
 
 \section{Decoding Parameters}

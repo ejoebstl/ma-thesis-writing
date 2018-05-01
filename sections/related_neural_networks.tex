@@ -186,9 +186,9 @@ Non-linear activation functions, or simply \textit{activation functions}, can be
 \subsubsection{Batch Normalization}
 Several different forms of batch normalization exist. In this work, we only consider the concept introduced in \cite{IoffeS15}, which can be formulated as follows: 
 \[
-y = \frac{x - E[x]}{\sqrt{Var[x] + \epsilon}}
+y = \frac{x - \operatorname{E}[x]}{\sqrt{\operatorname{Var}[x] + \epsilon}}
 \]
-Here, $Var[x]$ is the variance of our input vector $x$, $E[x]$ is the expected value of $x$ and $\epsilon$ is a small constant to avoid division by zero. The normalization is not applied on a single value of $x$, but rather on a whole batch when using stochastic gradient descend. The motivation behind batch normalization is to fix the distribution of activations within the network, where the mean is fixed to $0$ and the variance is fixed to $1$. This makes it easier to use nonlinearities which saturate for very large or very small activations. 
+Here, $\operatorname{Var}[x]$ is the variance of our input vector $x$, $\operatorname{E}[x]$ is the expected value of $x$ and $\epsilon$ is a small constant to avoid division by zero. The normalization is not applied on a single value of $x$, but rather on a whole batch when using stochastic gradient descend. The motivation behind batch normalization is to fix the distribution of activations within the network, where the mean is fixed to $0$ and the variance is fixed to $1$. This makes it easier to use nonlinearities which saturate for very large or very small activations. 
 
 \subsection{The Cross Entropy Loss Function}
 
