@@ -166,12 +166,19 @@ legend style={at={(0.5,-0.2)},
 	},
 	symbolic y coords={FC \text{$(-5,5)$}, FC \text{$(-13,9)$}, TDNN},
 	ytick=data,nodes near coords, nodes near coords align={horizontal},
+	every node near coord/.append style = {
+		anchor=west,
+		/pgf/number format/.cd,
+		fixed,
+		fixed zerofill,
+		precision=1,
+	},
 	legend style={at={(0.5,-0.2)},
 		anchor=north,legend columns=2}
 	]
 	\addplot coordinates {(16.4,FC \text{$(-5,5)$}) (15.7,FC \text{$(-13,9)$}) (16.6,TDNN)};
 	\addlegendentry{Reverberated Validation \quad \quad}
-	\addplot coordinates {(11.9,FC \text{$(-5,5)$}) (12,FC \text{$(-13,9)$}) (12,TDNN)};
+	\addplot coordinates {(11.9,FC \text{$(-5,5)$}) (12.0,FC \text{$(-13,9)$}) (12.0,TDNN)};
 	\addlegendentry{Clean Validation}
 	\end{axis}
 	\end{tikzpicture}
